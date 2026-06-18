@@ -19,11 +19,15 @@ load_dotenv(ROOT / ".env")
 
 from run import load_calls
 from src.api_3cplus import aggregate_production
+from datetime import date
+
 from src.snapshot import (
     breakdown_total,
+    build_cloud_snapshot_payload,
     build_snapshot_payload,
     enrich_summary_improdutivas,
     load_snapshot,
+    merge_improdutivas_from,
     save_snapshot,
     summary_has_improdutiva_data,
 )
@@ -249,8 +253,20 @@ def _share_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     return _finalize_chart(fig)
 
 
+def _short_agent_label(name: str, *, max_len: int = 26) -> str:
+    label = str(name or "").strip()
+    if len(label) <= max_len:
+        return label
+    parts = label.split()
+    if len(parts) >= 2:
+        short = f"{parts[0]} {parts[-1][0]}."
+        if len(short) <= max_len:
+            return short
+    return label[: max_len - 1] + "…"
+
+
 def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
-    """Barras horizontais — eficiência de reversão (top agentes com CPC)."""
+    """Barras horizontais — eficiência de reversão por agente."""
     chart = df[df["CPC"] >= 3].copy()
     chart = chart.dropna(subset=["% Reversão"]).sort_values("% Reversão", ascending=True).tail(10)
     if chart.empty:
@@ -258,74 +274,92 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     if chart.empty:
         return go.Figure()
 
-    fig = go.Figure(
+    values = chart["% Reversão"].astype(float).tolist()
+    agents_full = chart["Agente"].tolist()
+    agents = [_short_agent_label(name) for name in agents_full]
+    cpcs = chart["CPC"].astype(int).tolist()
+    acordos = chart["Acordos"].astype(int).tolist()
+    xmax = min(110.0, max(max(values) * 1.15 + 12, 88.0))
+
+    bar_colors = [
+        _BRAND["primary"] if value >= _REV_META_PCT else "#B8C5E8"
+        for value in values
+    ]
+
+    fig = go.Figure()
+    fig.add_vrect(
+        x0=_REV_META_PCT,
+        x1=xmax,
+        fillcolor="rgba(13, 122, 40, 0.06)",
+        layer="below",
+        line_width=0,
+    )
+    fig.add_trace(
         go.Bar(
-            x=chart["% Reversão"],
-            y=chart["Agente"],
+            x=values,
+            y=agents,
             orientation="h",
-            marker=dict(
-                color=[
-                    _BRAND["success_light"] if v >= _REV_META_PCT else "#FEE2E2"
-                    for v in chart["% Reversão"]
-                ],
-                line=dict(
-                    color=[
-                        _BRAND["success"] if v >= _REV_META_PCT else "#DC2626"
-                        for v in chart["% Reversão"]
-                    ],
-                    width=1,
-                ),
-                cornerradius=6,
-            ),
-            text=[
-                f"{'✓ ' if v >= _REV_META_PCT else '! '}{v:.1f}%".replace(".", ",")
-                for v in chart["% Reversão"]
-            ],
+            marker=dict(color=bar_colors, cornerradius=8, line=dict(width=0)),
+            text=[f"{value:.1f}%".replace(".", ",") for value in values],
             textposition="outside",
-            textfont=dict(color=_CHART_LABEL_COLOR, size=11),
+            textfont=dict(color=_CHART_TEXT, size=12),
             cliponaxis=False,
-            hovertemplate="<b>%{y}</b><br>Reversão: %{x:.1f}%<extra></extra>",
+            customdata=list(zip(agents_full, cpcs, acordos, values)),
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br>"
+                "Reversão: %{customdata[3]:.1f}%<br>"
+                "CPC: %{customdata[1]} · Acordos: %{customdata[2]}<extra></extra>"
+            ),
         )
     )
-    rev_title = "Eficiência de reversão · top agentes"
+    fig.add_vline(
+        x=_REV_META_PCT,
+        line_dash="dot",
+        line_color=_BRAND["border"],
+        line_width=1.5,
+    )
+
+    rev_title = "Eficiência de reversão"
     if squad != "Todos":
         rev_title = f"{rev_title} · {squad}"
     layout = _chart_theme(rev_title, height=420)
+    layout["margin"] = dict(l=4, r=52, t=56, b=20)
     layout["xaxis"] = dict(
-        range=[0, min(105, chart["% Reversão"].max() * 1.2 + 5)],
-        title=dict(text="Reversão (%)", font=dict(color=_CHART_TEXT, size=12)),
-        tickfont=dict(color=_CHART_TEXT, size=12),
+        range=[0, xmax],
+        title=dict(text="Reversão sobre CPC (%)", font=dict(color=_CHART_TEXT, size=12)),
+        tickfont=dict(color=_CHART_TEXT, size=11),
+        gridcolor="#E8EEF8",
+        zeroline=False,
+        dtick=20,
     )
     layout["yaxis"] = dict(
         automargin=True,
         tickfont=dict(color=_CHART_TEXT, size=12),
         tickmode="array",
-        tickvals=list(chart["Agente"]),
-        ticktext=list(chart["Agente"]),
+        tickvals=agents,
+        ticktext=agents,
     )
     layout["showlegend"] = False
-    layout["shapes"] = [
-        dict(
-            type="line",
-            x0=_REV_META_PCT,
-            x1=_REV_META_PCT,
-            y0=-0.5,
-            y1=len(chart) - 0.5,
-            yref="y",
-            xref="x",
-            line=dict(color=_BRAND["text_muted"], width=1, dash="dot"),
-        )
-    ]
     layout["annotations"] = [
         dict(
             x=_REV_META_PCT,
-            y=1.04,
+            y=1.06,
             yref="paper",
             xref="x",
             text="Meta 70%",
             showarrow=False,
             font=dict(size=10, color=_BRAND["text_muted"]),
-        )
+        ),
+        dict(
+            x=0.99,
+            y=1.06,
+            yref="paper",
+            xref="paper",
+            text="Azul = meta atingida",
+            showarrow=False,
+            xanchor="right",
+            font=dict(size=10, color=_BRAND["text_muted"]),
+        ),
     ]
     fig.update_layout(**layout)
     return _finalize_chart(fig)
@@ -404,123 +438,187 @@ def _require_viewer_login() -> bool:
 
 def _apply_streamlit_secrets_env() -> None:
     try:
-        token = st.secrets.get("THREECPLUS_API_TOKEN", "")
-        if token:
-            os.environ["THREECPLUS_API_TOKEN"] = str(token)
+        if "THREECPLUS_API_TOKEN" in st.secrets:
+            os.environ["THREECPLUS_API_TOKEN"] = str(st.secrets["THREECPLUS_API_TOKEN"])
         for key in ("DATA_SOURCE", "THREECPLUS_API_BASE", "CSV_IMPORT_FOLDER"):
-            value = st.secrets.get(key, "")
-            if value:
-                os.environ[key] = str(value)
+            if key in st.secrets:
+                os.environ[key] = str(st.secrets[key])
     except Exception:
         pass
 
 
-def _load_calls_dashboard(mode: str) -> tuple[list, str]:
+def _load_calls_dashboard(mode: str, ref_date: str | None = None) -> tuple[list, str]:
     _apply_streamlit_secrets_env()
     if mode == "cloud":
-        token = os.getenv("THREECPLUS_API_TOKEN", "").strip()
-        if token:
-            from src.api_3cplus import fetch_calls_for_day
+        from src.api_3cplus import _api_token, fetch_calls_for_day
 
-            calls = fetch_calls_for_day()
-            return calls, "API 3C Plus (nuvem)"
+        if not _api_token():
+            raise ValueError(
+                "THREECPLUS_API_TOKEN ausente nos Secrets do Streamlit. "
+                'Adicione THREECPLUS_API_TOKEN e DATA_SOURCE = "api".'
+            )
+        target_day = date.fromisoformat(ref_date) if ref_date else date.today()
+        calls = fetch_calls_for_day(target_day=target_day)
+        if not calls:
+            raise ValueError(f"API 3C Plus retornou 0 ligações para {target_day.isoformat()}.")
+        return calls, f"API 3C Plus (nuvem · {target_day.isoformat()})"
     return load_calls()
 
 
-def _upload_snapshot(summary: dict) -> None:
-    payload = build_snapshot_payload(summary)
+def _upload_snapshot(summary: dict) -> str | None:
+    payload = build_cloud_snapshot_payload(summary)
+    upload_error: str | None = None
     try:
         upload_snapshot_sheets(payload)
-    except Exception:
-        pass
+    except Exception as exc:
+        upload_error = f"Planilha _Snapshot: {exc}"
     if drive_snapshot_configured():
         try:
             upload_snapshot_drive(payload)
-        except Exception:
-            pass
+        except Exception as exc:
+            upload_error = upload_error or f"Drive: {exc}"
+    return upload_error
 
 
-def _maybe_reaggregate(summary: dict | None, mode: str) -> tuple[dict | None, str | None]:
-    """Reagrega ligações quando o snapshot não traz improdutivas (dados antigos)."""
-    if not summary:
-        return None, None
+@st.cache_data(ttl=60, show_spinner=False)
+def _download_remote_snapshot() -> dict | None:
+    summary = download_snapshot_sheets()
+    if not summary and drive_snapshot_configured():
+        summary = download_snapshot_drive()
+    return summary
+
+
+def _reaggregate_summary(
+    summary: dict,
+    mode: str,
+    *,
+    ref_date: str | None = None,
+) -> tuple[dict, str | None, str | None]:
     if summary_has_improdutiva_data(summary):
-        return enrich_summary_improdutivas(summary), None
+        return enrich_summary_improdutivas(summary), None, None
     try:
-        calls, origin = _load_calls_dashboard(mode)
+        calls, origin = _load_calls_dashboard(mode, ref_date=ref_date)
         fresh = aggregate_production(calls)
         if not summary_has_improdutiva_data(fresh):
-            return enrich_summary_improdutivas(summary), None
-        save_snapshot(fresh)
-        _upload_snapshot(fresh)
-        return fresh, origin
-    except Exception:
-        return enrich_summary_improdutivas(summary), None
+            return (
+                enrich_summary_improdutivas(summary),
+                None,
+                (
+                    f"Fonte retornou {len(calls)} ligações, mas 0 improdutivas. "
+                    "Rode `python run.py` no PC com o CSV do dia."
+                ),
+            )
+        upload_error = _upload_snapshot(fresh)
+        try:
+            save_snapshot(fresh)
+        except Exception:
+            pass
+        if upload_error:
+            return fresh, origin, upload_error
+        return fresh, origin, None
+    except Exception as exc:
+        bundled = load_snapshot()
+        if bundled and summary_has_improdutiva_data(bundled):
+            merged = merge_improdutivas_from(bundled, summary)
+            return merged, "Snapshot local (data/latest.json)", None
+        return enrich_summary_improdutivas(summary), None, str(exc)
 
 
-@st.cache_data(ttl=120, show_spinner=False)
 def fetch_data(refresh: bool, mode: str) -> dict:
+    _apply_streamlit_secrets_env()
+    reload_error: str | None = None
+
     if mode == "cloud":
         if refresh:
             try:
-                calls, origin = _load_calls_dashboard(mode)
-                summary = aggregate_production(calls)
-                _upload_snapshot(summary)
-                return {"summary": summary, "origin": f"{origin} · atualizado agora"}
-            except Exception:
-                pass
-        summary = download_snapshot_sheets()
-        if not summary and drive_snapshot_configured():
-            summary = download_snapshot_drive()
+                remote = _download_remote_snapshot() or {}
+                ref_date = remote.get("date")
+                summary, origin, err = _reaggregate_summary(remote, mode, ref_date=ref_date)
+                improd = int(summary.get("total_improdutiva", 0))
+                return {
+                    "summary": summary,
+                    "origin": f"{origin or 'API 3C Plus'} · atualizado agora · {improd} improdutivas",
+                    "reload_error": err,
+                }
+            except Exception as exc:
+                reload_error = str(exc)
+                remote = _download_remote_snapshot()
+                if remote:
+                    bundled = load_snapshot()
+                    summary = merge_improdutivas_from(bundled or {}, remote)
+                    return {
+                        "summary": summary,
+                        "origin": "Planilha Google (visualização remota)",
+                        "reload_error": reload_error,
+                    }
+
+        summary = _download_remote_snapshot()
         if not summary:
             return {
                 "summary": None,
                 "origin": "Planilha Google (_Snapshot) — rode run.py no PC principal",
+                "reload_error": reload_error,
             }
-        summary, reorigin = _maybe_reaggregate(summary, mode)
+        bundled = load_snapshot()
+        summary = merge_improdutivas_from(bundled or {}, summary)
+        summary, reorigin, regen_error = _reaggregate_summary(
+            summary, mode, ref_date=summary.get("date")
+        )
         origin = "Planilha Google (visualização remota)"
         if reorigin:
             origin = f"{reorigin} · dados atualizados"
-        return {"summary": summary, "origin": origin}
+        if regen_error and not reload_error:
+            reload_error = regen_error
+        return {"summary": summary, "origin": origin, "reload_error": reload_error}
 
     if refresh:
         calls, origin = _load_calls_dashboard(mode)
         summary = aggregate_production(calls)
         save_snapshot(summary)
-        _upload_snapshot(summary)
-        return {"summary": summary, "origin": origin}
+        upload_err = _upload_snapshot(summary)
+        return {
+            "summary": summary,
+            "origin": origin,
+            "reload_error": upload_err,
+        }
 
     snapshot = load_snapshot()
     if snapshot:
-        summary, reorigin = _maybe_reaggregate(snapshot, mode)
+        summary, reorigin, regen_error = _reaggregate_summary(
+            snapshot, mode, ref_date=snapshot.get("date")
+        )
         origin = "Snapshot (data/latest.json)"
         if reorigin:
             origin = f"{reorigin} · snapshot atualizado"
-        return {"summary": summary, "origin": origin}
+        return {"summary": summary, "origin": origin, "reload_error": regen_error}
 
     if remote_snapshot_configured():
-        remote = download_snapshot_sheets()
+        remote = _download_remote_snapshot()
         if remote:
-            summary, reorigin = _maybe_reaggregate(remote, mode)
+            summary, reorigin, regen_error = _reaggregate_summary(
+                remote, mode, ref_date=remote.get("date")
+            )
             origin = "Planilha Google (_Snapshot)"
             if reorigin:
                 origin = f"{reorigin} · dados atualizados"
-            return {"summary": summary, "origin": origin}
+            return {"summary": summary, "origin": origin, "reload_error": regen_error}
 
     if drive_snapshot_configured():
         remote = download_snapshot_drive()
         if remote:
-            summary, reorigin = _maybe_reaggregate(remote, mode)
+            summary, reorigin, regen_error = _reaggregate_summary(
+                remote, mode, ref_date=remote.get("date")
+            )
             origin = "Google Drive (snapshot)"
             if reorigin:
                 origin = f"{reorigin} · dados atualizados"
-            return {"summary": summary, "origin": origin}
+            return {"summary": summary, "origin": origin, "reload_error": regen_error}
 
     calls, origin = _load_calls_dashboard(mode)
     summary = aggregate_production(calls)
     save_snapshot(summary)
-    _upload_snapshot(summary)
-    return {"summary": summary, "origin": origin}
+    upload_err = _upload_snapshot(summary)
+    return {"summary": summary, "origin": origin, "reload_error": upload_err}
 
 
 def _squad_banner_class(squad: str) -> str:
@@ -740,11 +838,16 @@ def main() -> None:
         refresh = st.button(refresh_label, type="primary", use_container_width=True)
 
     if refresh:
+        _download_remote_snapshot.clear()
         fetch_data.clear()
 
     payload = fetch_data(refresh=refresh, mode=mode)
     base_summary = payload["summary"]
     origin = payload["origin"]
+    reload_error = payload.get("reload_error")
+
+    if reload_error:
+        st.warning(f"Não foi possível atualizar pela API: {reload_error}")
 
     if not base_summary:
         st.error(
@@ -825,6 +928,7 @@ def main() -> None:
             else:
                 st.caption("Sem acordos para exibir participação.")
         with c2:
+            st.caption("Top 10 agentes com CPC ≥ 3 · faixa verde = meta de 70%")
             rev_chart = _reversion_chart(df, selected_squad)
             if len(rev_chart.data) > 0:
                 st.plotly_chart(rev_chart, use_container_width=True, theme=None)
@@ -846,9 +950,11 @@ def main() -> None:
         else:
             st.info(
                 "Dados de improdutivas ainda não disponíveis. "
-                "No PC principal rode `python run.py` ou clique em «Atualizar agora» "
-                "(com CSV ou API 3C Plus configurados)."
+                "No PC rode `powershell -File scripts/atualizar_painel.ps1`, "
+                "depois **git push** e **Recarregar** aqui."
             )
+            if reload_error:
+                st.caption(f"Detalhe: {reload_error}")
 
     with tab4:
         search = st.text_input(
