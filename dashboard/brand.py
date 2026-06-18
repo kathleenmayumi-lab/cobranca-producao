@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import base64
 import json
 from functools import lru_cache
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 BRAND_PATH = ROOT / "config" / "brand.json"
-LOGO_PATH = Path(__file__).resolve().parent / "assets" / "velotax-logo.svg"
+ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+
+# Assets oficiais (velotax.com.br)
+MASCOTE_URL = "https://velotax.com.br/images/mascote/velo-afirmativo.png"
+LOGO_BRANCO_URL = "https://velotax.com.br/images/logos/velotax-logo-branco.png"
 
 
 @lru_cache(maxsize=1)
@@ -21,15 +26,20 @@ def colors() -> dict[str, str]:
     return load_brand()["colors"]
 
 
-def logo_svg_inline() -> str:
-    if LOGO_PATH.exists():
-        return LOGO_PATH.read_text(encoding="utf-8").strip()
-    company = load_brand()["company"]
-    primary = colors()["primary"]
-    return (
-        f'<span style="font-size:1.6rem;font-weight:800;color:{primary};'
-        f'letter-spacing:-0.02em">{company}</span>'
-    )
+def _asset_src(filename: str, remote_url: str, mime: str = "image/png") -> str:
+    local = ASSETS_DIR / filename
+    if local.exists():
+        encoded = base64.b64encode(local.read_bytes()).decode("ascii")
+        return f"data:{mime};base64,{encoded}"
+    return remote_url
+
+
+def mascote_url() -> str:
+    return _asset_src("velo-mascote.png", MASCOTE_URL)
+
+
+def logo_url() -> str:
+    return _asset_src("velotax-logo-branco.png", LOGO_BRANCO_URL)
 
 
 def page_title() -> str:
@@ -58,7 +68,7 @@ def css() -> str:
     .velo-header {{
         background: linear-gradient(135deg, {c['navy_deep']} 0%, {c['navy']} 35%, {c['primary']} 100%);
         border-radius: 16px;
-        padding: 1.1rem 1.4rem;
+        padding: 1rem 1.4rem;
         margin-bottom: 1rem;
         display: flex;
         align-items: center;
@@ -71,11 +81,23 @@ def css() -> str:
     .velo-header-left {{
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: 16px;
         min-width: 0;
     }}
-    .velo-logo svg {{ height: 58px; width: auto; display: block; flex-shrink: 0; }}
-    .velo-logo svg text {{ fill: #ffffff !important; }}
+    .velo-mascote {{
+        height: 76px;
+        width: auto;
+        display: block;
+        flex-shrink: 0;
+        object-fit: contain;
+    }}
+    .velo-wordmark {{
+        height: 34px;
+        width: auto;
+        display: block;
+        flex-shrink: 0;
+        object-fit: contain;
+    }}
     .velo-title-block {{ display: flex; flex-direction: column; gap: 2px; }}
     .velo-product {{
         color: #ffffff;
@@ -83,23 +105,6 @@ def css() -> str:
         font-weight: 800;
         line-height: 1.2;
         letter-spacing: -0.02em;
-    }}
-    .velo-tagline {{
-        color: rgba(255, 255, 255, 0.88);
-        font-size: 0.88rem;
-        font-weight: 500;
-    }}
-    .velo-badge {{
-        background: rgba(255, 255, 255, 0.16);
-        border: 1px solid rgba(255, 255, 255, 0.28);
-        color: #fff;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        padding: 6px 10px;
-        border-radius: 999px;
-        white-space: nowrap;
     }}
 
     div[data-testid="stDataFrame"] {{
@@ -212,26 +217,19 @@ def css() -> str:
 """
 
 
-def header_html(subtitle: str = "") -> str:
+def header_html() -> str:
     brand = load_brand()
-    logo = logo_svg_inline()
-    if logo.startswith("<svg"):
-        logo_block = f'<div class="velo-logo">{logo}</div>'
-    else:
-        logo_block = logo
-    subtitle_html = (
-        f'<div class="velo-tagline">{subtitle}</div>' if subtitle.strip() else ""
-    )
+    mascote = mascote_url()
+    wordmark = logo_url()
     return f"""
 <div class="velo-header">
   <div class="velo-header-left">
-    {logo_block}
+    <img class="velo-mascote" src="{mascote}" alt="Velo, mascote oficial do Velotax" />
     <div class="velo-title-block">
       <div class="velo-product">{brand['product']}</div>
-      {subtitle_html}
     </div>
   </div>
-  <div class="velo-badge">{brand['company']}</div>
+  <img class="velo-wordmark" src="{wordmark}" alt="{brand['company']}" />
 </div>
 """
 

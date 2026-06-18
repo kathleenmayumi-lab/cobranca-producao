@@ -98,7 +98,7 @@ def _chart_theme(title: str, height: int = 500) -> dict:
         margin=dict(l=12, r=24, t=52, b=12),
         plot_bgcolor=_BRAND["background"],
         paper_bgcolor=_BRAND["surface"],
-        font=dict(family="Inter, Segoe UI, system-ui, sans-serif", size=12, color=_BRAND["text_muted"]),
+        font=dict(family="Inter, Segoe UI, system-ui, sans-serif", size=12, color=_BRAND["text"]),
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -106,9 +106,26 @@ def _chart_theme(title: str, height: int = 500) -> dict:
             xanchor="right",
             x=1,
             bgcolor="rgba(255,255,255,0.8)",
+            font=dict(color=_BRAND["text"], size=12),
         ),
         hoverlabel=dict(bgcolor=_BRAND["primary_dark"], font_size=12, font_color="#fff"),
     )
+
+
+def _finalize_chart(fig: go.Figure) -> go.Figure:
+    """Garante rótulos dos gráficos em preto (não herdam cor da fatia/barra)."""
+    if not fig.data:
+        return fig
+    text_color = _BRAND["text"]
+    fig.update_layout(font=dict(color=text_color))
+    fig.update_traces(
+        textfont=dict(color=text_color),
+        outsidetextfont=dict(color=text_color),
+        insidetextfont=dict(color=text_color),
+    )
+    fig.update_xaxes(tickfont=dict(color=text_color), title_font=dict(color=text_color))
+    fig.update_yaxes(tickfont=dict(color=text_color), title_font=dict(color=text_color))
+    return fig
 
 
 def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
@@ -179,7 +196,7 @@ def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
         tickfont=dict(color=_BRAND["text"], size=12),
     )
     fig.update_layout(**layout)
-    return fig
+    return _finalize_chart(fig)
 
 
 def _share_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
@@ -206,6 +223,7 @@ def _share_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
             textinfo="percent",
             textposition="outside",
             textfont=dict(size=11, color=_BRAND["text"]),
+            outsidetextfont=dict(size=11, color=_BRAND["text"]),
             hovertemplate="<b>%{label}</b><br>%{value} acordos · %{percent}<extra></extra>",
         )
     )
@@ -225,7 +243,7 @@ def _share_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
         )
     ]
     fig.update_layout(**layout)
-    return fig
+    return _finalize_chart(fig)
 
 
 def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
@@ -260,7 +278,7 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     )
     layout["showlegend"] = False
     fig.update_layout(**layout)
-    return fig
+    return _finalize_chart(fig)
 
 
 def _reversion_pct(cpc: int, acordos: int) -> float | None:
@@ -447,11 +465,9 @@ def main() -> None:
     if is_cloud:
         _require_viewer_login()
 
-    subtitle = "Modo visualização" if is_cloud else ""
-
     head_l, head_r = st.columns([5, 1])
     with head_l:
-        st.markdown(brand.header_html(subtitle), unsafe_allow_html=True)
+        st.markdown(brand.header_html(), unsafe_allow_html=True)
     with head_r:
         st.markdown("<div style='margin-top:1.6rem'></div>", unsafe_allow_html=True)
         refresh_label = "Recarregar" if is_cloud else "Atualizar agora"
