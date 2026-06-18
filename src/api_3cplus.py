@@ -21,7 +21,17 @@ def _api_base() -> str:
 
 
 def _api_token() -> str:
-    return os.getenv("THREECPLUS_API_TOKEN", "").strip()
+    token = os.getenv("THREECPLUS_API_TOKEN", "").strip()
+    if token:
+        return token
+    try:
+        import streamlit as st
+
+        if "THREECPLUS_API_TOKEN" in st.secrets:
+            return str(st.secrets["THREECPLUS_API_TOKEN"]).strip()
+    except Exception:
+        pass
+    return ""
 
 
 def _headers() -> dict[str, str]:
@@ -275,7 +285,8 @@ def _improdutiva_breakdown_by_type(
             continue
         qualification = _improdutiva_type_label(row)
         agent = row["agent_name"] or "Sem agente"
-        buckets.setdefault(qualification, {})[agent] = buckets[qualification].get(agent, 0) + 1
+        agent_counts = buckets.setdefault(qualification, {})
+        agent_counts[agent] = agent_counts.get(agent, 0) + 1
 
     ordered = sorted(
         buckets.keys(),

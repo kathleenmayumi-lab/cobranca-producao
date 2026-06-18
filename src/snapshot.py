@@ -51,7 +51,8 @@ def breakdown_from_rows(rows: list) -> dict[str, list[dict[str, Any]]]:
         else:
             qualification = "Sem finalização"
         agent = row.get("agent_name") or "Sem agente"
-        buckets.setdefault(qualification, {})[agent] = buckets[qualification].get(agent, 0) + 1
+        agent_counts = buckets.setdefault(qualification, {})
+        agent_counts[agent] = agent_counts.get(agent, 0) + 1
 
     ordered = sorted(
         buckets.keys(),
@@ -85,6 +86,27 @@ def enrich_summary_improdutivas(summary: dict[str, Any]) -> dict[str, Any]:
     if rows:
         enriched["improdutivas_by_type"] = breakdown_from_rows(rows)
     return enriched
+
+
+def merge_improdutivas_from(source: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
+    """Copia improdutivas de outro snapshot quando o principal não tem."""
+    if summary_has_improdutiva_data(target):
+        return target
+    if not summary_has_improdutiva_data(source):
+        return target
+    merged = dict(target)
+    merged["improdutivas_by_type"] = source.get("improdutivas_by_type", {})
+    merged["total_improdutiva"] = source.get("total_improdutiva", breakdown_total(merged["improdutivas_by_type"]))
+    if source.get("improdutiva_rows"):
+        merged["improdutiva_rows"] = source["improdutiva_rows"]
+    return merged
+
+
+def build_cloud_snapshot_payload(summary: dict[str, Any]) -> dict[str, Any]:
+    """Payload enxuto para aba _Snapshot (sem listas enormes de linhas)."""
+    payload = build_snapshot_payload(summary)
+    payload.pop("improdutiva_rows", None)
+    return payload
 
 
 def build_snapshot_payload(summary: dict[str, Any]) -> dict[str, Any]:
