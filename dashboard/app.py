@@ -42,6 +42,7 @@ _BRAND = brand.colors()
 
 MASCOTE_CDN = "https://velotax.com.br/images/mascote/velo-afirmativo.png"
 LOGO_CDN = "https://velotax.com.br/images/logos/velotax-logo-branco.png"
+_CHART_LABEL_COLOR = "#000000"
 
 
 def _build_header_html() -> str:
@@ -153,25 +154,35 @@ def _chart_theme(title: str, height: int = 500) -> dict:
 
 
 def _finalize_chart(fig: go.Figure) -> go.Figure:
-    """Garante rótulos dos gráficos em preto (não herdam cor da fatia/barra)."""
+    """Garante rótulos dos gráficos em preto (não herdam cor da barra/fatia)."""
     if not fig.data:
         return fig
-    text_color = _BRAND["text"]
+    text_color = _CHART_LABEL_COLOR
     fig.update_layout(
-        font=dict(color=text_color),
-        legend=dict(font=dict(color=text_color)),
+        font=dict(color=_BRAND["text"]),
+        legend=dict(font=dict(color=_BRAND["text"])),
     )
-    fig.update_xaxes(tickfont=dict(color=text_color), title_font=dict(color=text_color))
-    fig.update_yaxes(tickfont=dict(color=text_color), title_font=dict(color=text_color))
+    fig.update_xaxes(
+        tickfont=dict(color=_BRAND["text"]),
+        title_font=dict(color=_BRAND["text"]),
+    )
+    fig.update_yaxes(
+        tickfont=dict(color=_BRAND["text"]),
+        title_font=dict(color=_BRAND["text"]),
+    )
     for trace in fig.data:
         trace_type = getattr(trace, "type", None)
         if trace_type == "pie":
             trace.update(
-                textfont=dict(color=text_color),
-                outsidetextfont=dict(color=text_color),
+                textfont=dict(color=text_color, size=11),
+                outsidetextfont=dict(color=text_color, size=11),
+                insidetextfont=dict(color=text_color, size=11),
             )
         elif trace_type == "bar":
-            trace.update(textfont=dict(color=text_color))
+            trace.update(
+                textfont=dict(color=text_color, size=11),
+                textposition="outside",
+            )
     return fig
 
 
@@ -196,7 +207,8 @@ def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
             text=chart["CPC"],
             texttemplate="%{text}",
             textposition="outside",
-            textfont=dict(color=_BRAND["text"], size=11),
+            textfont=dict(color=_CHART_LABEL_COLOR, size=11),
+            cliponaxis=False,
             hovertemplate="<b>%{y}</b><br>CPC: %{x}<extra></extra>",
         )
     )
@@ -207,14 +219,15 @@ def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
             orientation="h",
             name="Acordos",
             marker=dict(
-                color=_BRAND["accent"],
-                line=dict(color=_BRAND["accent_dark"], width=1),
+                color=_BRAND["success"],
+                line=dict(color=_BRAND["success"], width=1),
                 cornerradius=6,
             ),
             text=chart["Acordos"],
             texttemplate="%{text}",
             textposition="outside",
-            textfont=dict(color=_BRAND["text"], size=11),
+            textfont=dict(color=_CHART_LABEL_COLOR, size=11),
+            cliponaxis=False,
             customdata=rev,
             hovertemplate=(
                 "<b>%{y}</b><br>Acordos: %{x}<br>Reversão: %{customdata:.1f}%<extra></extra>"
@@ -235,7 +248,8 @@ def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
         gridcolor="#f1f5f9",
         zeroline=False,
         range=[0, max_x * 1.28],
-        title="Quantidade",
+        title=dict(text="Quantidade", font=dict(color=_BRAND["text"], size=12)),
+        tickfont=dict(color=_BRAND["text"], size=12),
     )
     layout["yaxis"] = dict(
         showgrid=False,
@@ -269,8 +283,8 @@ def _share_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
             marker=dict(colors=palette[: len(labels)], line=dict(color="#fff", width=2)),
             textinfo="percent",
             textposition="outside",
-            textfont=dict(size=11, color=_BRAND["text"]),
-            outsidetextfont=dict(size=11, color=_BRAND["text"]),
+            textfont=dict(color=_CHART_LABEL_COLOR, size=11),
+            outsidetextfont=dict(size=11, color=_CHART_LABEL_COLOR),
             hovertemplate="<b>%{label}</b><br>%{value} acordos · %{percent}<extra></extra>",
         )
     )
@@ -310,7 +324,8 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
             marker=dict(color=_BRAND["primary"], cornerradius=6),
             text=[f"{v:.1f}%".replace(".", ",") for v in chart["% Reversão"]],
             textposition="outside",
-            textfont=dict(color=_BRAND["text"], size=11),
+            textfont=dict(color=_CHART_LABEL_COLOR, size=11),
+            cliponaxis=False,
             hovertemplate="<b>%{y}</b><br>Reversão: %{x:.1f}%<extra></extra>",
         )
     )
@@ -589,19 +604,19 @@ def main() -> None:
     tab1, tab2, tab3 = st.tabs(["Performance", "CPC por tipo", "Detalhes"])
 
     with tab1:
-        st.plotly_chart(_production_chart(df, selected_squad), use_container_width=True)
+        st.plotly_chart(_production_chart(df, selected_squad), use_container_width=True, theme=None)
 
         c1, c2 = st.columns([1, 1])
         with c1:
             share = _share_chart(df, selected_squad)
             if len(share.data) > 0:
-                st.plotly_chart(share, use_container_width=True)
+                st.plotly_chart(share, use_container_width=True, theme=None)
             else:
                 st.caption("Sem acordos para exibir participação.")
         with c2:
             rev_chart = _reversion_chart(df, selected_squad)
             if len(rev_chart.data) > 0:
-                st.plotly_chart(rev_chart, use_container_width=True)
+                st.plotly_chart(rev_chart, use_container_width=True, theme=None)
             else:
                 st.caption("Sem dados de reversão por agente.")
 

@@ -101,7 +101,7 @@ def css() -> str:
     .velo-title-block {{ display: flex; flex-direction: column; gap: 2px; }}
     .velo-product {{
         color: #ffffff;
-        font-size: 1.35rem;
+        font-size: 1.7rem;
         font-weight: 800;
         line-height: 1.2;
         letter-spacing: -0.02em;
