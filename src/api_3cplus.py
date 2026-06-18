@@ -195,14 +195,18 @@ def _merge_agent_stats(
     return sorted(merged, key=lambda item: (-item[2], -item[1], item[0]))
 
 
+def _is_finalized_row(row: dict[str, Any]) -> bool:
+    return (
+        row["readable_status_text"] == "Finalizada"
+        or row["is_production"]
+        or row["is_cpc"]
+    )
+
+
 def _count_finalized_by_agent(rows: list[dict[str, Any]]) -> list[tuple[str, int]]:
     counts: dict[str, int] = {}
     for row in rows:
-        if not (
-            row["readable_status_text"] == "Finalizada"
-            or row["is_production"]
-            or row["is_cpc"]
-        ):
+        if not _is_finalized_row(row):
             continue
         agent = row["agent_name"] or "Sem agente"
         counts[agent] = counts.get(agent, 0) + 1
@@ -229,23 +233,47 @@ def _cpc_breakdown_by_type(normalized: list[dict[str, Any]]) -> dict[str, list[t
     return breakdown
 
 
+def _improdutiva_breakdown_by_type(
+    normalized: list[dict[str, Any]],
+) -> dict[str, list[tuple[str, int]]]:
+    """Contagem de finalizações improdutivas (não CPC) por tipo e por agente."""
+    buckets: dict[str, dict[str, int]] = {}
+
+    for row in normalized:
+        if not _is_finalized_row(row) or row.get("is_cpc"):
+            continue
+        qualification = row["qualification_name"] or "Sem finalização"
+        agent = row["agent_name"] or "Sem agente"
+        buckets.setdefault(qualification, {})[agent] = buckets[qualification].get(agent, 0) + 1
+
+    ordered = sorted(
+        buckets.keys(),
+        key=lambda qual: (-sum(buckets[qual].values()), qual),
+    )
+    return {
+        qualification: sorted(
+            buckets[qualification].items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+        for qualification in ordered
+    }
+
+
 def aggregate_production(calls: list[dict[str, Any]]) -> dict[str, Any]:
     """Agrega CPC e produção (Acordo formalizado) por agente."""
     normalized = [normalize_call(c) for c in calls]
 
     production = [c for c in normalized if c["is_production"]]
     cpc = [c for c in normalized if c["is_cpc"]]
-    finalized = [
-        c
-        for c in normalized
-        if c["readable_status_text"] == "Finalizada" or c["is_production"] or c["is_cpc"]
-    ]
+    finalized = [c for c in normalized if _is_finalized_row(c)]
+    improdutiva = [c for c in finalized if not c["is_cpc"]]
 
     cpc_ranking = _count_by_agent(normalized, "is_cpc")
     acordos_ranking = _count_by_agent(normalized, "is_production")
     finalized_ranking = _count_finalized_by_agent(normalized)
     agent_stats = _merge_agent_stats(cpc_ranking, acordos_ranking, finalized_ranking)
     cpc_by_type = _cpc_breakdown_by_type(normalized)
+    improdutivas_by_type = _improdutiva_breakdown_by_type(normalized)
 
     return {
         "date": date.today().isoformat(),
@@ -254,10 +282,13 @@ def aggregate_production(calls: list[dict[str, Any]]) -> dict[str, Any]:
         "total_finalized": len(finalized),
         "total_cpc": len(cpc),
         "total_production": len(production),
+        "total_improdutiva": len(improdutiva),
         "by_agent": acordos_ranking,
         "cpc_by_agent": cpc_ranking,
         "agent_stats": agent_stats,
         "cpc_by_type": cpc_by_type,
+        "improdutivas_by_type": improdutivas_by_type,
         "cpc_rows": cpc,
         "production_rows": production,
+        "improdutiva_rows": improdutiva,
     }

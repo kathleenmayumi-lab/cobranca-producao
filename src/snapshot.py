@@ -9,6 +9,22 @@ from typing import Any
 SNAPSHOT_PATH = Path(__file__).resolve().parent.parent / "data" / "latest.json"
 
 
+def _normalize_type_breakdown(by_type: dict) -> dict[str, list[dict[str, Any]]]:
+    normalized: dict[str, list[dict[str, Any]]] = {}
+    for qual, rows in by_type.items():
+        normalized_rows: list[dict[str, Any]] = []
+        if isinstance(rows, dict):
+            normalized_rows = [{"agent": agent, "count": int(count)} for agent, count in rows.items()]
+        else:
+            for row in rows:
+                if isinstance(row, dict):
+                    normalized_rows.append({"agent": row["agent"], "count": int(row["count"])})
+                elif isinstance(row, (list, tuple)) and len(row) >= 2:
+                    normalized_rows.append({"agent": row[0], "count": int(row[1])})
+        normalized[qual] = normalized_rows
+    return normalized
+
+
 def build_snapshot_payload(summary: dict[str, Any]) -> dict[str, Any]:
     """Normaliza o summary para JSON (local, planilha remota e dashboard)."""
     agent_stats = []
@@ -32,18 +48,8 @@ def build_snapshot_payload(summary: dict[str, Any]) -> dict[str, Any]:
                 }
             )
 
-    cpc_by_type: dict[str, list[dict[str, Any]]] = {}
-    for qual, rows in summary.get("cpc_by_type", {}).items():
-        normalized_rows: list[dict[str, Any]] = []
-        if isinstance(rows, dict):
-            normalized_rows = [{"agent": agent, "count": int(count)} for agent, count in rows.items()]
-        else:
-            for row in rows:
-                if isinstance(row, dict):
-                    normalized_rows.append({"agent": row["agent"], "count": int(row["count"])})
-                elif isinstance(row, (list, tuple)) and len(row) >= 2:
-                    normalized_rows.append({"agent": row[0], "count": int(row[1])})
-        cpc_by_type[qual] = normalized_rows
+    cpc_by_type = _normalize_type_breakdown(summary.get("cpc_by_type", {}))
+    improdutivas_by_type = _normalize_type_breakdown(summary.get("improdutivas_by_type", {}))
 
     return {
         "updated_at": summary["updated_at"],
@@ -52,10 +58,13 @@ def build_snapshot_payload(summary: dict[str, Any]) -> dict[str, Any]:
         "total_finalized": summary["total_finalized"],
         "total_cpc": summary["total_cpc"],
         "total_production": summary["total_production"],
+        "total_improdutiva": summary.get("total_improdutiva", 0),
         "agent_stats": agent_stats,
         "cpc_by_type": cpc_by_type,
+        "improdutivas_by_type": improdutivas_by_type,
         "production_rows": summary.get("production_rows", []),
         "cpc_rows": summary.get("cpc_rows", []),
+        "improdutiva_rows": summary.get("improdutiva_rows", []),
     }
 
 

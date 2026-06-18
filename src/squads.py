@@ -51,7 +51,7 @@ def _agents_from_summary(summary: dict[str, Any]) -> set[str]:
             names.add(row.get("agent", ""))
         elif isinstance(row, (list, tuple)) and row:
             names.add(str(row[0]))
-    for key in ("cpc_rows", "production_rows"):
+    for key in ("cpc_rows", "production_rows", "improdutiva_rows"):
         for row in summary.get(key, []):
             names.add(row.get("agent_name", ""))
     return {name for name in names if name}
@@ -100,9 +100,9 @@ def _filter_agent_stats(agent_stats: list, agents: set[str]) -> list[dict[str, A
     return filtered
 
 
-def _filter_cpc_by_type(cpc_by_type: dict, agents: set[str]) -> dict:
+def _filter_breakdown_by_type(by_type: dict, agents: set[str]) -> dict:
     filtered: dict = {}
-    for qual, rows in cpc_by_type.items():
+    for qual, rows in by_type.items():
         if isinstance(rows, dict):
             block = {agent: count for agent, count in rows.items() if agent in agents}
         else:
@@ -115,6 +115,20 @@ def _filter_cpc_by_type(cpc_by_type: dict, agents: set[str]) -> dict:
     return filtered
 
 
+def _breakdown_total(by_type: dict) -> int:
+    total = 0
+    for rows in by_type.values():
+        if isinstance(rows, dict):
+            total += sum(int(count) for count in rows.values())
+            continue
+        for row in rows:
+            if isinstance(row, dict):
+                total += int(row["count"])
+            elif isinstance(row, (list, tuple)) and len(row) >= 2:
+                total += int(row[1])
+    return total
+
+
 def filter_summary(summary: dict[str, Any], squad_label: str) -> dict[str, Any]:
     agents = agents_for_squad(squad_label, summary)
     if agents is None:
@@ -125,10 +139,19 @@ def filter_summary(summary: dict[str, Any], squad_label: str) -> dict[str, Any]:
     production_rows = [
         row for row in summary.get("production_rows", []) if row.get("agent_name") in agents
     ]
-    cpc_by_type = _filter_cpc_by_type(summary.get("cpc_by_type", {}), agents)
+    improdutiva_rows = [
+        row for row in summary.get("improdutiva_rows", []) if row.get("agent_name") in agents
+    ]
+    cpc_by_type = _filter_breakdown_by_type(summary.get("cpc_by_type", {}), agents)
+    improdutivas_by_type = _filter_breakdown_by_type(summary.get("improdutivas_by_type", {}), agents)
 
     total_cpc = sum(int(row["cpc"]) for row in agent_stats)
     total_production = sum(int(row["acordos"]) for row in agent_stats)
+    total_improdutiva = (
+        len(improdutiva_rows)
+        if improdutiva_rows
+        else _breakdown_total(improdutivas_by_type)
+    )
     if agent_stats and all("finalizadas" in row for row in agent_stats):
         total_finalized = sum(int(row["finalizadas"]) for row in agent_stats)
     else:
@@ -140,9 +163,12 @@ def filter_summary(summary: dict[str, Any], squad_label: str) -> dict[str, Any]:
             "agent_stats": agent_stats,
             "cpc_rows": cpc_rows,
             "production_rows": production_rows,
+            "improdutiva_rows": improdutiva_rows,
             "cpc_by_type": cpc_by_type,
+            "improdutivas_by_type": improdutivas_by_type,
             "total_cpc": total_cpc,
             "total_production": total_production,
+            "total_improdutiva": total_improdutiva,
             "total_finalized": total_finalized,
             "squad": squad_label,
         }

@@ -590,7 +590,7 @@ def _filter_details(df: pd.DataFrame, query: str) -> pd.DataFrame:
     return df[mask]
 
 
-def _cpc_agent_rows(agents) -> list[dict]:
+def _agent_count_rows(agents) -> list[dict]:
     rows: list[dict[str, Any]] = []
     if isinstance(agents, dict):
         return [{"Agente": agent, "Ligações": int(count)} for agent, count in agents.items()]
@@ -600,6 +600,56 @@ def _cpc_agent_rows(agents) -> list[dict]:
         elif isinstance(item, (list, tuple)) and len(item) >= 2:
             rows.append({"Agente": item[0], "Ligações": int(item[1])})
     return rows
+
+
+def _breakdown_from_rows(rows: list) -> dict[str, list[dict[str, Any]]]:
+    buckets: dict[str, dict[str, int]] = {}
+    for row in rows:
+        qualification = row.get("qualification_name") or "Sem finalização"
+        agent = row.get("agent_name") or "Sem agente"
+        buckets.setdefault(qualification, {})[agent] = buckets[qualification].get(agent, 0) + 1
+
+    ordered = sorted(
+        buckets.keys(),
+        key=lambda qual: (-sum(buckets[qual].values()), qual),
+    )
+    return {
+        qualification: [
+            {"agent": agent, "count": count}
+            for agent, count in sorted(
+                buckets[qualification].items(),
+                key=lambda item: (-item[1], item[0]),
+            )
+        ]
+        for qualification in ordered
+    }
+
+
+def _improdutivas_by_type(summary: dict) -> dict:
+    by_type = summary.get("improdutivas_by_type")
+    if by_type:
+        return by_type
+    rows = summary.get("improdutiva_rows", [])
+    if rows:
+        return _breakdown_from_rows(rows)
+    return {}
+
+
+def _show_breakdown_by_type(by_type: dict, *, empty_msg: str) -> None:
+    if not by_type:
+        st.info(empty_msg)
+        return
+    cols = st.columns(2)
+    for i, (qual, agents) in enumerate(by_type.items()):
+        agent_rows = _agent_count_rows(agents)
+        block = pd.DataFrame(agent_rows)
+        total = int(block["Ligações"].sum()) if not block.empty else 0
+        with cols[i % 2]:
+            st.markdown(f"**{qual}** · Total: **{total}**")
+            if block.empty:
+                st.caption("Nenhum registro")
+            else:
+                st.dataframe(block.sort_values("Ligações", ascending=False), hide_index=True)
 
 
 def _show_details_table(df: pd.DataFrame, empty_msg: str, search: str) -> None:
@@ -695,7 +745,9 @@ def main() -> None:
         )
         return
 
-    tab1, tab2, tab3 = st.tabs(["Performance", "CPC por tipo", "Detalhes"])
+    tab1, tab2, tab3, tab4 = st.tabs(
+        ["Performance", "CPC por tipo", "Improdutivas por tipo", "Detalhes"]
+    )
 
     with tab1:
         st.subheader("Produção por agente")
@@ -717,23 +769,18 @@ def main() -> None:
                 st.caption("Sem dados de reversão por agente.")
 
     with tab2:
-        cpc_by_type = summary.get("cpc_by_type", {})
-        if not cpc_by_type:
-            st.info("Sem breakdown de CPC.")
-        else:
-            cols = st.columns(2)
-            for i, (qual, agents) in enumerate(cpc_by_type.items()):
-                agent_rows = _cpc_agent_rows(agents)
-                block = pd.DataFrame(agent_rows)
-                total = int(block["Ligações"].sum()) if not block.empty else 0
-                with cols[i % 2]:
-                    st.markdown(f"**{qual}** · Total: **{total}**")
-                    if block.empty:
-                        st.caption("Nenhum registro")
-                    else:
-                        st.dataframe(block.sort_values("Ligações", ascending=False), hide_index=True)
+        _show_breakdown_by_type(
+            summary.get("cpc_by_type", {}),
+            empty_msg="Sem breakdown de CPC.",
+        )
 
     with tab3:
+        _show_breakdown_by_type(
+            _improdutivas_by_type(summary),
+            empty_msg="Sem breakdown de improdutivas. Atualize os dados com «Atualizar agora» ou rode run.py.",
+        )
+
+    with tab4:
         search = st.text_input(
             "Pesquisar",
             placeholder="Ex.: número do contrato, agente, finalização ou telefone",
