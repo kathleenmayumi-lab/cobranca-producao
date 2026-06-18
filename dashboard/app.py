@@ -27,80 +27,18 @@ from src.snapshot_sheets import download_snapshot as download_snapshot_sheets
 from src.snapshot_sheets import remote_snapshot_configured, upload_snapshot as upload_snapshot_sheets
 from src.squads import agents_for_squad, filter_summary, squad_labels
 
+from dashboard import brand
+
 st.set_page_config(
-    page_title="Cobrança — Painel",
+    page_title=brand.page_title(),
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-st.markdown(
-    """
-<style>
-    .block-container { padding-top: 1.2rem; max-width: 1400px; }
-    div[data-testid="stDataFrame"] { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
-    div[data-testid="stDataFrame"] td:first-child { color: #0f172a !important; font-weight: 600; }
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
-    .stTabs [data-baseweb="tab"] { border-radius: 8px 8px 0 0; padding: 10px 20px; }
+st.markdown(brand.css(), unsafe_allow_html=True)
 
-    .kpi-card {
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 14px;
-        padding: 1rem 1.1rem;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        min-height: 92px;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    }
-    .kpi-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-    .kpi-icon svg { width: 24px; height: 24px; }
-    .kpi-icon.cpc { background: #eff6ff; color: #2563eb; }
-    .kpi-icon.acordos { background: #ecfdf5; color: #16a34a; }
-    .kpi-icon.reversao { background: #f5f3ff; color: #7c3aed; }
-    .kpi-icon.finalizadas { background: #f8fafc; color: #475569; }
-    .kpi-body { display: flex; flex-direction: column; gap: 2px; }
-    .kpi-label {
-        font-size: 0.78rem;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: #64748b;
-    }
-    .kpi-value {
-        font-size: 2rem;
-        font-weight: 800;
-        line-height: 1.1;
-        color: #0f172a;
-    }
-    .squad-banner {
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
-        margin: 0.2rem 0 0.8rem 0;
-        font-size: 0.95rem;
-        font-weight: 600;
-    }
-    .squad-banner.todos { background: #f8fafc; border: 1px solid #e2e8f0; color: #475569; }
-    .squad-banner.over90 { background: #eef2ff; border: 1px solid #c7d2fe; color: #312e81; }
-    .squad-banner.early { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
-    div[data-testid="stSegmentedControl"] {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 4px;
-    }
-</style>
-""",
-    unsafe_allow_html=True,
-)
+_BRAND = brand.colors()
 
 
 def _fmt_num(value: int) -> str:
@@ -155,12 +93,12 @@ ICON_FINALIZADAS = """
 
 def _chart_theme(title: str, height: int = 500) -> dict:
     return dict(
-        title=dict(text=title, font=dict(size=17, color="#0f172a", family="Segoe UI, system-ui")),
+        title=dict(text=title, font=dict(size=17, color=_BRAND["text"], family="Inter, Segoe UI, system-ui")),
         height=height,
         margin=dict(l=12, r=24, t=52, b=12),
-        plot_bgcolor="#fafafa",
-        paper_bgcolor="#ffffff",
-        font=dict(family="Segoe UI, system-ui, sans-serif", size=12, color="#475569"),
+        plot_bgcolor=_BRAND["background"],
+        paper_bgcolor=_BRAND["surface"],
+        font=dict(family="Inter, Segoe UI, system-ui, sans-serif", size=12, color=_BRAND["text_muted"]),
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -169,7 +107,7 @@ def _chart_theme(title: str, height: int = 500) -> dict:
             x=1,
             bgcolor="rgba(255,255,255,0.8)",
         ),
-        hoverlabel=dict(bgcolor="#0f172a", font_size=12, font_color="#fff"),
+        hoverlabel=dict(bgcolor=_BRAND["primary_dark"], font_size=12, font_color="#fff"),
     )
 
 
@@ -187,14 +125,14 @@ def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
             orientation="h",
             name="CPC entregue",
             marker=dict(
-                color="#4338ca",
-                line=dict(color="#312e81", width=1),
+                color=_BRAND["primary"],
+                line=dict(color=_BRAND["primary_dark"], width=1),
                 cornerradius=6,
             ),
             text=chart["CPC"],
             texttemplate="%{text}",
             textposition="outside",
-            textfont=dict(color="#312e81", size=11),
+            textfont=dict(color=_BRAND["primary_dark"], size=11),
             hovertemplate="<b>%{y}</b><br>CPC: %{x}<extra></extra>",
         )
     )
@@ -205,14 +143,14 @@ def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
             orientation="h",
             name="Acordos",
             marker=dict(
-                color="#059669",
-                line=dict(color="#047857", width=1),
+                color=_BRAND["accent"],
+                line=dict(color=_BRAND["accent_dark"], width=1),
                 cornerradius=6,
             ),
             text=chart["Acordos"],
             texttemplate="%{text}",
             textposition="outside",
-            textfont=dict(color="#047857", size=11),
+            textfont=dict(color=_BRAND["accent_dark"], size=11),
             customdata=rev,
             hovertemplate=(
                 "<b>%{y}</b><br>Acordos: %{x}<br>Reversão: %{customdata:.1f}%<extra></extra>"
@@ -238,7 +176,7 @@ def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     layout["yaxis"] = dict(
         showgrid=False,
         automargin=True,
-        tickfont=dict(color="#0f172a", size=12),
+        tickfont=dict(color=_BRAND["text"], size=12),
     )
     fig.update_layout(**layout)
     return fig
@@ -258,7 +196,7 @@ def _share_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
         labels.append("Outros")
         values.append(others)
 
-    palette = ["#2563eb", "#4f46e5", "#7c3aed", "#0891b2", "#059669", "#65a30d", "#ca8a04", "#ea580c", "#94a3b8"]
+    palette = brand.chart_palette()
     fig = go.Figure(
         go.Pie(
             labels=labels,
@@ -267,7 +205,7 @@ def _share_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
             marker=dict(colors=palette[: len(labels)], line=dict(color="#fff", width=2)),
             textinfo="percent",
             textposition="outside",
-            textfont=dict(size=11, color="#0f172a"),
+            textfont=dict(size=11, color=_BRAND["text"]),
             hovertemplate="<b>%{label}</b><br>%{value} acordos · %{percent}<extra></extra>",
         )
     )
@@ -279,10 +217,10 @@ def _share_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     layout["showlegend"] = False
     layout["annotations"] = [
         dict(
-            text=f"<b>{total}</b><br><span style='font-size:12px;color:#64748b'>acordos</span>",
+            text=f"<b>{total}</b><br><span style='font-size:12px;color:{_BRAND['text_muted']}'>acordos</span>",
             x=0.5,
             y=0.5,
-            font=dict(size=22, color="#0f172a"),
+            font=dict(size=22, color=_BRAND["text"]),
             showarrow=False,
         )
     ]
@@ -300,7 +238,7 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
         return go.Figure()
 
     colors = [
-        "#ef4444" if v < 40 else "#f59e0b" if v < 60 else "#22c55e"
+        "#ef4444" if v < 40 else "#f59e0b" if v < 60 else _BRAND["accent"]
         for v in chart["% Reversão"]
     ]
     fig = go.Figure(
@@ -321,7 +259,7 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     layout["xaxis"] = dict(range=[0, min(105, chart["% Reversão"].max() * 1.2 + 5)], title="Reversão (%)")
     layout["yaxis"] = dict(
         automargin=True,
-        tickfont=dict(color="#0f172a", size=12),
+        tickfont=dict(color=_BRAND["text"], size=12),
     )
     layout["showlegend"] = False
     fig.update_layout(**layout)
@@ -512,14 +450,15 @@ def main() -> None:
     if is_cloud:
         _require_viewer_login()
 
-    col_title, col_btn = st.columns([5, 1])
-    with col_title:
-        st.title("Painel de Cobrança")
-        caption = "Produção em tempo real · CPC · Taxa de reversão"
-        if is_cloud:
-            caption += " · modo visualização"
-        st.caption(caption)
-    with col_btn:
+    tagline = brand.load_brand()["tagline"]
+    if is_cloud:
+        tagline += " · modo visualização"
+
+    head_l, head_r = st.columns([5, 1])
+    with head_l:
+        st.markdown(brand.header_html(tagline), unsafe_allow_html=True)
+    with head_r:
+        st.markdown("<div style='margin-top:1.6rem'></div>", unsafe_allow_html=True)
         refresh_label = "Recarregar" if is_cloud else "Atualizar agora"
         refresh = st.button(refresh_label, type="primary", use_container_width=True)
 
