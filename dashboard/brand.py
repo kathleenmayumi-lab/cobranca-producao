@@ -217,19 +217,27 @@ def css() -> str:
 """
 
 
-def header_html() -> str:
-    brand = load_brand()
-    mascote = mascote_url()
-    wordmark = logo_url()
+def header_html(subtitle: str = "") -> str:
+    """HTML do cabeçalho. `subtitle` é ignorado (compatibilidade com versões antigas)."""
+    _ = subtitle
+    try:
+        brand_data = load_brand()
+        product = str(brand_data.get("product") or "Painel de Cobrança")
+        company = str(brand_data.get("company") or "Velotax")
+        mascote = mascote_url()
+        wordmark = logo_url()
+    except Exception:
+        product, company = "Painel de Cobrança", "Velotax"
+        mascote, wordmark = MASCOTE_URL, LOGO_BRANCO_URL
     return f"""
 <div class="velo-header">
   <div class="velo-header-left">
     <img class="velo-mascote" src="{mascote}" alt="Velo, mascote oficial do Velotax" />
     <div class="velo-title-block">
-      <div class="velo-product">{brand['product']}</div>
+      <div class="velo-product">{product}</div>
     </div>
   </div>
-  <img class="velo-wordmark" src="{wordmark}" alt="{brand['company']}" />
+  <img class="velo-wordmark" src="{wordmark}" alt="{company}" />
 </div>
 """
 

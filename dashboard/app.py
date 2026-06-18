@@ -117,14 +117,21 @@ def _finalize_chart(fig: go.Figure) -> go.Figure:
     if not fig.data:
         return fig
     text_color = _BRAND["text"]
-    fig.update_layout(font=dict(color=text_color))
-    fig.update_traces(
-        textfont=dict(color=text_color),
-        outsidetextfont=dict(color=text_color),
-        insidetextfont=dict(color=text_color),
+    fig.update_layout(
+        font=dict(color=text_color),
+        legend=dict(font=dict(color=text_color)),
     )
     fig.update_xaxes(tickfont=dict(color=text_color), title_font=dict(color=text_color))
     fig.update_yaxes(tickfont=dict(color=text_color), title_font=dict(color=text_color))
+    for trace in fig.data:
+        trace_type = getattr(trace, "type", None)
+        if trace_type == "pie":
+            trace.update(
+                textfont=dict(color=text_color),
+                outsidetextfont=dict(color=text_color),
+            )
+        elif trace_type == "bar":
+            trace.update(textfont=dict(color=text_color))
     return fig
 
 
