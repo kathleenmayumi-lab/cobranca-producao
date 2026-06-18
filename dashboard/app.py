@@ -43,6 +43,7 @@ _BRAND = brand.colors()
 MASCOTE_CDN = "https://velotax.com.br/images/mascote/velo-afirmativo.png"
 LOGO_CDN = "https://velotax.com.br/images/logos/velotax-logo-branco.png"
 _CHART_LABEL_COLOR = "#000000"
+_CHART_TEXT = "#000000"
 
 
 def _build_header_html() -> str:
@@ -134,12 +135,18 @@ ICON_FINALIZADAS = """
 
 def _chart_theme(title: str, height: int = 500) -> dict:
     return dict(
-        title=dict(text=title, font=dict(size=17, color=_BRAND["text"], family="Inter, Segoe UI, system-ui")),
+        template=None,
+        title=dict(
+            text=title,
+            font=dict(size=17, color=_CHART_TEXT, family="Inter, Segoe UI, system-ui"),
+            x=0,
+            xanchor="left",
+        ),
         height=height,
         margin=dict(l=12, r=24, t=52, b=12),
         plot_bgcolor=_BRAND["background"],
         paper_bgcolor=_BRAND["surface"],
-        font=dict(family="Inter, Segoe UI, system-ui, sans-serif", size=12, color=_BRAND["text"]),
+        font=dict(family="Inter, Segoe UI, system-ui, sans-serif", size=12, color=_CHART_TEXT),
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -147,40 +154,41 @@ def _chart_theme(title: str, height: int = 500) -> dict:
             xanchor="right",
             x=1,
             bgcolor="rgba(255,255,255,0.8)",
-            font=dict(color=_BRAND["text"], size=12),
+            font=dict(color=_CHART_TEXT, size=12),
         ),
         hoverlabel=dict(bgcolor=_BRAND["primary_dark"], font_size=12, font_color="#fff"),
     )
 
 
 def _finalize_chart(fig: go.Figure) -> go.Figure:
-    """Garante rótulos dos gráficos em preto (não herdam cor da barra/fatia)."""
+    """Garante título, eixos, legenda e rótulos em preto."""
     if not fig.data:
         return fig
-    text_color = _CHART_LABEL_COLOR
     fig.update_layout(
-        font=dict(color=_BRAND["text"]),
-        legend=dict(font=dict(color=_BRAND["text"])),
+        template=None,
+        font=dict(color=_CHART_TEXT),
+        title_font=dict(color=_CHART_TEXT),
+        legend=dict(font=dict(color=_CHART_TEXT)),
     )
     fig.update_xaxes(
-        tickfont=dict(color=_BRAND["text"]),
-        title_font=dict(color=_BRAND["text"]),
+        tickfont=dict(color=_CHART_TEXT, size=12),
+        title_font=dict(color=_CHART_TEXT, size=12),
     )
     fig.update_yaxes(
-        tickfont=dict(color=_BRAND["text"]),
-        title_font=dict(color=_BRAND["text"]),
+        tickfont=dict(color=_CHART_TEXT, size=12),
+        title_font=dict(color=_CHART_TEXT, size=12),
     )
     for trace in fig.data:
         trace_type = getattr(trace, "type", None)
         if trace_type == "pie":
             trace.update(
-                textfont=dict(color=text_color, size=11),
-                outsidetextfont=dict(color=text_color, size=11),
-                insidetextfont=dict(color=text_color, size=11),
+                textfont=dict(color=_CHART_LABEL_COLOR, size=11),
+                outsidetextfont=dict(color=_CHART_LABEL_COLOR, size=11),
+                insidetextfont=dict(color=_CHART_LABEL_COLOR, size=11),
             )
         elif trace_type == "bar":
             trace.update(
-                textfont=dict(color=text_color, size=11),
+                textfont=dict(color=_CHART_LABEL_COLOR, size=11),
                 textposition="outside",
             )
     return fig
@@ -248,13 +256,16 @@ def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
         gridcolor="#f1f5f9",
         zeroline=False,
         range=[0, max_x * 1.28],
-        title=dict(text="Quantidade", font=dict(color=_BRAND["text"], size=12)),
-        tickfont=dict(color=_BRAND["text"], size=12),
+        title=dict(text="Quantidade", font=dict(color=_CHART_TEXT, size=12)),
+        tickfont=dict(color=_CHART_TEXT, size=12),
     )
     layout["yaxis"] = dict(
         showgrid=False,
         automargin=True,
-        tickfont=dict(color=_BRAND["text"], size=12),
+        tickfont=dict(color=_CHART_TEXT, size=12),
+        tickmode="array",
+        tickvals=list(chart["Agente"]),
+        ticktext=list(chart["Agente"]),
     )
     fig.update_layout(**layout)
     return _finalize_chart(fig)
@@ -333,10 +344,17 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     if squad != "Todos":
         rev_title = f"{rev_title} · {squad}"
     layout = _chart_theme(rev_title, height=420)
-    layout["xaxis"] = dict(range=[0, min(105, chart["% Reversão"].max() * 1.2 + 5)], title="Reversão (%)")
+    layout["xaxis"] = dict(
+        range=[0, min(105, chart["% Reversão"].max() * 1.2 + 5)],
+        title=dict(text="Reversão (%)", font=dict(color=_CHART_TEXT, size=12)),
+        tickfont=dict(color=_CHART_TEXT, size=12),
+    )
     layout["yaxis"] = dict(
         automargin=True,
-        tickfont=dict(color=_BRAND["text"], size=12),
+        tickfont=dict(color=_CHART_TEXT, size=12),
+        tickmode="array",
+        tickvals=list(chart["Agente"]),
+        ticktext=list(chart["Agente"]),
     )
     layout["showlegend"] = False
     fig.update_layout(**layout)

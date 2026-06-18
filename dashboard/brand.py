@@ -213,6 +213,11 @@ def css() -> str:
     header[data-testid="stHeader"] {{
         background: transparent;
     }}
+
+    /* Plotly: força todos os textos do gráfico em preto */
+    [data-testid="stPlotlyChart"] svg text {{
+        fill: #000000 !important;
+    }}
 </style>
 """
 
