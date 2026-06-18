@@ -295,6 +295,41 @@ def css() -> str:
         text-align: right;
         font-variant-numeric: tabular-nums;
     }}
+    .rev-badge {{
+        position: relative;
+        z-index: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 0 0.5rem;
+    }}
+    .rev-badge span:last-child {{
+        color: {c['text']};
+        font-weight: 700;
+    }}
+    .rev-icon {{
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1;
+    }}
+    .rev-icon.alert {{
+        background: #FEE2E2;
+        color: #DC2626;
+        border: 1px solid #FECACA;
+    }}
+    .rev-icon.ok {{
+        background: {c['success_light']};
+        color: {c['success']};
+        border: 1px solid #B8E6C1;
+    }}
 
     #MainMenu {{ visibility: hidden; }}
     footer {{ visibility: hidden; }}

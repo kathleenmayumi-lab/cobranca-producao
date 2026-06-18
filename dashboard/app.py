@@ -44,6 +44,7 @@ MASCOTE_CDN = "https://velotax.com.br/images/mascote/velo-afirmativo.png"
 LOGO_CDN = "https://velotax.com.br/images/logos/velotax-logo-branco.png"
 _CHART_LABEL_COLOR = "#000000"
 _CHART_TEXT = "#000000"
+_REV_META_PCT = 70.0
 
 
 def _build_header_html() -> str:
@@ -255,8 +256,24 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
             x=chart["% Reversão"],
             y=chart["Agente"],
             orientation="h",
-            marker=dict(color=_BRAND["primary"], cornerradius=6),
-            text=[f"{v:.1f}%".replace(".", ",") for v in chart["% Reversão"]],
+            marker=dict(
+                color=[
+                    _BRAND["success_light"] if v >= _REV_META_PCT else "#FEE2E2"
+                    for v in chart["% Reversão"]
+                ],
+                line=dict(
+                    color=[
+                        _BRAND["success"] if v >= _REV_META_PCT else "#DC2626"
+                        for v in chart["% Reversão"]
+                    ],
+                    width=1,
+                ),
+                cornerradius=6,
+            ),
+            text=[
+                f"{'✓ ' if v >= _REV_META_PCT else '! '}{v:.1f}%".replace(".", ",")
+                for v in chart["% Reversão"]
+            ],
             textposition="outside",
             textfont=dict(color=_CHART_LABEL_COLOR, size=11),
             cliponaxis=False,
@@ -280,6 +297,29 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
         ticktext=list(chart["Agente"]),
     )
     layout["showlegend"] = False
+    layout["shapes"] = [
+        dict(
+            type="line",
+            x0=_REV_META_PCT,
+            x1=_REV_META_PCT,
+            y0=-0.5,
+            y1=len(chart) - 0.5,
+            yref="y",
+            xref="x",
+            line=dict(color=_BRAND["text_muted"], width=1, dash="dot"),
+        )
+    ]
+    layout["annotations"] = [
+        dict(
+            x=_REV_META_PCT,
+            y=1.04,
+            yref="paper",
+            xref="x",
+            text="Meta 70%",
+            showarrow=False,
+            font=dict(size=10, color=_BRAND["text_muted"]),
+        )
+    ]
     fig.update_layout(**layout)
     return _finalize_chart(fig)
 
@@ -288,6 +328,36 @@ def _reversion_pct(cpc: int, acordos: int) -> float | None:
     if cpc <= 0:
         return None
     return round((acordos / cpc) * 100, 1)
+
+
+def _reversion_icon_html(rev: float) -> str:
+    if rev < _REV_META_PCT:
+        return '<span class="rev-icon alert" title="Abaixo da meta de 70%">!</span>'
+    return '<span class="rev-icon ok" title="Meta de 70% atingida">✓</span>'
+
+
+def _reversion_value_cell(rev: float | None) -> str:
+    if rev is None or pd.isna(rev):
+        return '<div class="macro-cell"><span>—</span></div>'
+    rev_val = float(rev)
+    pct_display = f"{rev_val:.1f}%".replace(".", ",")
+    width = min(100.0, rev_val)
+    fill = _BRAND["success_light"] if rev_val >= _REV_META_PCT else "#FEE2E2"
+    icon = _reversion_icon_html(rev_val)
+    return (
+        f'<div class="macro-cell rev-cell">'
+        f'<div class="macro-fill" style="width:{width:.1f}%;background:{fill};"></div>'
+        f'<span class="rev-badge">{icon}<span>{pct_display}</span></span>'
+        f"</div>"
+    )
+
+
+def _reversion_footer_cell(rev: float | None) -> str:
+    if rev is None:
+        return "—"
+    icon = _reversion_icon_html(rev)
+    pct_display = f"{rev:.1f}%".replace(".", ",")
+    return f'<span class="rev-badge">{icon}<span>{pct_display}</span></span>'
 
 
 def _dashboard_mode() -> str:
@@ -447,12 +517,7 @@ def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos") -> str:
     rows_html: list[str] = []
     for _, row in chart.iterrows():
         rev = row["% Reversão"]
-        rev_val = float(rev) if pd.notna(rev) else 0.0
-        rev_cell = (
-            _macro_cell(rev_val, 100, _BRAND["accent_light"], pct_scale=True)
-            if pd.notna(rev)
-            else '<div class="macro-cell"><span>—</span></div>'
-        )
+        rev_cell = _reversion_value_cell(rev if pd.notna(rev) else None)
         rows_html.append(
             "<tr>"
             f'<td class="agent-name">{row["Agente"]}</td>'
@@ -467,7 +532,7 @@ def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos") -> str:
     total_cpc = int(chart["CPC"].sum())
     total_aco = int(chart["Acordos"].sum())
     total_rev = _reversion_pct(total_cpc, total_aco)
-    total_rev_display = f"{total_rev:.1f}%".replace(".", ",") if total_rev is not None else "—"
+    total_rev_cell = _reversion_footer_cell(total_rev)
 
     squad_note = f" · {squad}" if squad != "Todos" else ""
     return f"""
@@ -491,7 +556,7 @@ def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos") -> str:
         <td class="num">{_fmt_num(total_lig)}</td>
         <td class="num">{_fmt_num(total_cpc)}</td>
         <td class="num">{_fmt_num(total_aco)}</td>
-        <td class="num">{total_rev_display}</td>
+        <td class="num">{total_rev_cell}</td>
       </tr>
     </tfoot>
   </table>
