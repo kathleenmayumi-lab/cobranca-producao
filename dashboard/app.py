@@ -19,7 +19,14 @@ load_dotenv(ROOT / ".env")
 
 from run import load_calls
 from src.api_3cplus import aggregate_production
-from src.snapshot import load_snapshot, save_snapshot
+from src.snapshot import (
+    breakdown_total,
+    build_snapshot_payload,
+    enrich_summary_improdutivas,
+    load_snapshot,
+    save_snapshot,
+    summary_has_improdutiva_data,
+)
 from src.snapshot_remote import download_snapshot as download_snapshot_drive
 from src.snapshot_remote import remote_snapshot_configured as drive_snapshot_configured
 from src.snapshot_remote import upload_snapshot as upload_snapshot_drive
@@ -395,6 +402,35 @@ def _require_viewer_login() -> bool:
     return True
 
 
+def _upload_snapshot(summary: dict) -> None:
+    payload = build_snapshot_payload(summary)
+    try:
+        upload_snapshot_sheets(payload)
+    except Exception:
+        pass
+    if drive_snapshot_configured():
+        try:
+            upload_snapshot_drive(payload)
+        except Exception:
+            pass
+
+
+def _maybe_reaggregate(summary: dict | None) -> tuple[dict | None, str | None]:
+    """Reagrega ligações quando o snapshot não traz improdutivas (dados antigos)."""
+    if not summary:
+        return None, None
+    if summary_has_improdutiva_data(summary):
+        return enrich_summary_improdutivas(summary), None
+    try:
+        calls, origin = load_calls()
+        fresh = aggregate_production(calls)
+        save_snapshot(fresh)
+        _upload_snapshot(fresh)
+        return fresh, origin
+    except Exception:
+        return enrich_summary_improdutivas(summary), None
+
+
 @st.cache_data(ttl=120, show_spinner=False)
 def fetch_data(refresh: bool, mode: str) -> dict:
     if mode == "cloud":
@@ -406,35 +442,49 @@ def fetch_data(refresh: bool, mode: str) -> dict:
                 "summary": None,
                 "origin": "Planilha Google (_Snapshot) — rode run.py no PC principal",
             }
-        return {"summary": summary, "origin": "Planilha Google (visualização remota)"}
+        summary, reorigin = _maybe_reaggregate(summary)
+        origin = "Planilha Google (visualização remota)"
+        if reorigin:
+            origin = f"{reorigin} · dados atualizados"
+        return {"summary": summary, "origin": origin}
 
     if refresh:
         calls, origin = load_calls()
         summary = aggregate_production(calls)
         save_snapshot(summary)
-        upload_snapshot_sheets(summary)
-        if drive_snapshot_configured():
-            upload_snapshot_drive(summary)
+        _upload_snapshot(summary)
         return {"summary": summary, "origin": origin}
 
     snapshot = load_snapshot()
     if snapshot:
-        return {"summary": snapshot, "origin": "Snapshot (data/latest.json)"}
+        summary, reorigin = _maybe_reaggregate(snapshot)
+        origin = "Snapshot (data/latest.json)"
+        if reorigin:
+            origin = f"{reorigin} · snapshot atualizado"
+        return {"summary": summary, "origin": origin}
 
     if remote_snapshot_configured():
         remote = download_snapshot_sheets()
         if remote:
-            return {"summary": remote, "origin": "Planilha Google (_Snapshot)"}
+            summary, reorigin = _maybe_reaggregate(remote)
+            origin = "Planilha Google (_Snapshot)"
+            if reorigin:
+                origin = f"{reorigin} · dados atualizados"
+            return {"summary": summary, "origin": origin}
 
     if drive_snapshot_configured():
         remote = download_snapshot_drive()
         if remote:
-            return {"summary": remote, "origin": "Google Drive (snapshot)"}
+            summary, reorigin = _maybe_reaggregate(remote)
+            origin = "Google Drive (snapshot)"
+            if reorigin:
+                origin = f"{reorigin} · dados atualizados"
+            return {"summary": summary, "origin": origin}
 
     calls, origin = load_calls()
     summary = aggregate_production(calls)
     save_snapshot(summary)
-    upload_snapshot_sheets(summary)
+    _upload_snapshot(summary)
     return {"summary": summary, "origin": origin}
 
 
@@ -602,36 +652,11 @@ def _agent_count_rows(agents) -> list[dict]:
     return rows
 
 
-def _breakdown_from_rows(rows: list) -> dict[str, list[dict[str, Any]]]:
-    buckets: dict[str, dict[str, int]] = {}
-    for row in rows:
-        qualification = row.get("qualification_name") or "Sem finalização"
-        agent = row.get("agent_name") or "Sem agente"
-        buckets.setdefault(qualification, {})[agent] = buckets[qualification].get(agent, 0) + 1
-
-    ordered = sorted(
-        buckets.keys(),
-        key=lambda qual: (-sum(buckets[qual].values()), qual),
-    )
-    return {
-        qualification: [
-            {"agent": agent, "count": count}
-            for agent, count in sorted(
-                buckets[qualification].items(),
-                key=lambda item: (-item[1], item[0]),
-            )
-        ]
-        for qualification in ordered
-    }
-
-
 def _improdutivas_by_type(summary: dict) -> dict:
-    by_type = summary.get("improdutivas_by_type")
-    if by_type:
+    summary = enrich_summary_improdutivas(summary)
+    by_type = summary.get("improdutivas_by_type") or {}
+    if breakdown_total(by_type) > 0:
         return by_type
-    rows = summary.get("improdutiva_rows", [])
-    if rows:
-        return _breakdown_from_rows(rows)
     return {}
 
 
@@ -775,10 +800,17 @@ def main() -> None:
         )
 
     with tab3:
-        _show_breakdown_by_type(
-            _improdutivas_by_type(summary),
-            empty_msg="Sem breakdown de improdutivas. Atualize os dados com «Atualizar agora» ou rode run.py.",
-        )
+        improdutivas = _improdutivas_by_type(summary)
+        if improdutivas:
+            _show_breakdown_by_type(improdutivas, empty_msg="")
+        elif summary_has_improdutiva_data(summary):
+            st.info("Nenhuma finalização improdutiva no período.")
+        else:
+            st.info(
+                "Dados de improdutivas ainda não disponíveis. "
+                "No PC principal rode `python run.py` ou clique em «Atualizar agora» "
+                "(com CSV ou API 3C Plus configurados)."
+            )
 
     with tab4:
         search = st.text_input(

@@ -56,6 +56,7 @@ def main() -> int:
     summary = aggregate_production(calls)
     print(f"  CPC: {summary['total_cpc']}")
     print(f"  Produção (Acordo formalizado): {summary['total_production']}")
+    print(f"  Improdutivas: {summary.get('total_improdutiva', 0)}")
 
     snapshot_path = save_snapshot(summary)
     print(f"  Snapshot: {snapshot_path}")

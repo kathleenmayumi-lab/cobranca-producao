@@ -25,6 +25,61 @@ def _normalize_type_breakdown(by_type: dict) -> dict[str, list[dict[str, Any]]]:
     return normalized
 
 
+def breakdown_total(by_type: dict) -> int:
+    total = 0
+    for rows in by_type.values():
+        if isinstance(rows, dict):
+            total += sum(int(count) for count in rows.values())
+            continue
+        for row in rows:
+            if isinstance(row, dict):
+                total += int(row["count"])
+            elif isinstance(row, (list, tuple)) and len(row) >= 2:
+                total += int(row[1])
+    return total
+
+
+def breakdown_from_rows(rows: list) -> dict[str, list[dict[str, Any]]]:
+    buckets: dict[str, dict[str, int]] = {}
+    for row in rows:
+        qualification = row.get("qualification_name") or "Sem finalização"
+        agent = row.get("agent_name") or "Sem agente"
+        buckets.setdefault(qualification, {})[agent] = buckets[qualification].get(agent, 0) + 1
+
+    ordered = sorted(
+        buckets.keys(),
+        key=lambda qual: (-sum(buckets[qual].values()), qual),
+    )
+    return {
+        qualification: [
+            {"agent": agent, "count": count}
+            for agent, count in sorted(
+                buckets[qualification].items(),
+                key=lambda item: (-item[1], item[0]),
+            )
+        ]
+        for qualification in ordered
+    }
+
+
+def summary_has_improdutiva_data(summary: dict[str, Any]) -> bool:
+    if summary.get("improdutiva_rows"):
+        return True
+    by_type = summary.get("improdutivas_by_type")
+    return bool(by_type) and breakdown_total(by_type) > 0
+
+
+def enrich_summary_improdutivas(summary: dict[str, Any]) -> dict[str, Any]:
+    enriched = dict(summary)
+    by_type = enriched.get("improdutivas_by_type")
+    if by_type and breakdown_total(by_type) > 0:
+        return enriched
+    rows = enriched.get("improdutiva_rows") or []
+    if rows:
+        enriched["improdutivas_by_type"] = breakdown_from_rows(rows)
+    return enriched
+
+
 def build_snapshot_payload(summary: dict[str, Any]) -> dict[str, Any]:
     """Normaliza o summary para JSON (local, planilha remota e dashboard)."""
     agent_stats = []
