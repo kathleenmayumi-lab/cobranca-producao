@@ -194,83 +194,6 @@ def _finalize_chart(fig: go.Figure) -> go.Figure:
     return fig
 
 
-def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
-    """Barras horizontais agrupadas: CPC vs Acordos por agente."""
-    chart = df[(df["CPC"] > 0) | (df["Acordos"] > 0)].copy()
-    chart = chart.sort_values("Acordos", ascending=True)
-    rev = chart["% Reversão"].fillna(0)
-
-    fig = go.Figure()
-    fig.add_trace(
-        go.Bar(
-            y=chart["Agente"],
-            x=chart["CPC"],
-            orientation="h",
-            name="CPC entregue",
-            marker=dict(
-                color=_BRAND["primary"],
-                line=dict(color=_BRAND["primary_dark"], width=1),
-                cornerradius=6,
-            ),
-            text=chart["CPC"],
-            texttemplate="%{text}",
-            textposition="outside",
-            textfont=dict(color=_CHART_LABEL_COLOR, size=11),
-            cliponaxis=False,
-            hovertemplate="<b>%{y}</b><br>CPC: %{x}<extra></extra>",
-        )
-    )
-    fig.add_trace(
-        go.Bar(
-            y=chart["Agente"],
-            x=chart["Acordos"],
-            orientation="h",
-            name="Acordos",
-            marker=dict(
-                color=_BRAND["success"],
-                line=dict(color=_BRAND["success"], width=1),
-                cornerradius=6,
-            ),
-            text=chart["Acordos"],
-            texttemplate="%{text}",
-            textposition="outside",
-            textfont=dict(color=_CHART_LABEL_COLOR, size=11),
-            cliponaxis=False,
-            customdata=rev,
-            hovertemplate=(
-                "<b>%{y}</b><br>Acordos: %{x}<br>Reversão: %{customdata:.1f}%<extra></extra>"
-            ),
-        )
-    )
-
-    max_x = max(int(chart["CPC"].max()), int(chart["Acordos"].max()), 1)
-    title = "Produção por agente · CPC entregue vs acordos"
-    if squad != "Todos":
-        title = f"{title} · {squad}"
-    layout = _chart_theme(title)
-    layout["barmode"] = "group"
-    layout["bargap"] = 0.22
-    layout["bargroupgap"] = 0.12
-    layout["xaxis"] = dict(
-        showgrid=True,
-        gridcolor="#f1f5f9",
-        zeroline=False,
-        range=[0, max_x * 1.28],
-        title=dict(text="Quantidade", font=dict(color=_CHART_TEXT, size=12)),
-        tickfont=dict(color=_CHART_TEXT, size=12),
-    )
-    layout["yaxis"] = dict(
-        showgrid=False,
-        automargin=True,
-        tickfont=dict(color=_CHART_TEXT, size=12),
-        tickmode="array",
-        tickvals=list(chart["Agente"]),
-        ticktext=list(chart["Agente"]),
-    )
-    fig.update_layout(**layout)
-    return _finalize_chart(fig)
-
-
 def _share_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     """Donut — participação de cada agente na produção total."""
     active = df[df["Acordos"] > 0].sort_values("Acordos", ascending=False)
@@ -483,9 +406,97 @@ def _agents_df(summary: dict) -> pd.DataFrame:
     df = pd.DataFrame(rows)
     if df.empty:
         return df
+    if "finalizadas" not in df.columns:
+        df["finalizadas"] = 0
+    df["finalizadas"] = df["finalizadas"].fillna(0).astype(int)
     df["% Reversão"] = df.apply(lambda r: _reversion_pct(int(r["cpc"]), int(r["acordos"])), axis=1)
-    df = df.sort_values(["acordos", "cpc"], ascending=False)
-    return df.rename(columns={"agent": "Agente", "cpc": "CPC", "acordos": "Acordos"})
+    df = df.sort_values(["acordos", "cpc", "finalizadas"], ascending=False)
+    return df.rename(
+        columns={
+            "agent": "Agente",
+            "finalizadas": "Ligações atendidas",
+            "cpc": "CPC",
+            "acordos": "Acordos",
+        }
+    )
+
+
+def _macro_cell(value: int | float, max_val: float, fill_color: str, *, pct_scale: bool = False) -> str:
+    if pct_scale:
+        width = min(100.0, float(value))
+    else:
+        width = min(100.0, (float(value) / max_val * 100) if max_val > 0 else 0)
+    display = _fmt_num(int(value)) if not pct_scale else f"{value:.1f}%".replace(".", ",")
+    return (
+        f'<div class="macro-cell">'
+        f'<div class="macro-fill" style="width:{width:.1f}%;background:{fill_color};"></div>'
+        f"<span>{display}</span></div>"
+    )
+
+
+def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos") -> str:
+    """Visão macro por agente: ligações → CPC → acordos → reversão."""
+    chart = df.copy()
+    if chart.empty:
+        return ""
+
+    max_lig = max(int(chart["Ligações atendidas"].max()), 1)
+    max_cpc = max(int(chart["CPC"].max()), 1)
+    max_aco = max(int(chart["Acordos"].max()), 1)
+
+    rows_html: list[str] = []
+    for _, row in chart.iterrows():
+        rev = row["% Reversão"]
+        rev_val = float(rev) if pd.notna(rev) else 0.0
+        rev_cell = (
+            _macro_cell(rev_val, 100, _BRAND["accent_light"], pct_scale=True)
+            if pd.notna(rev)
+            else '<div class="macro-cell"><span>—</span></div>'
+        )
+        rows_html.append(
+            "<tr>"
+            f'<td class="agent-name">{row["Agente"]}</td>'
+            f'<td class="num">{_macro_cell(int(row["Ligações atendidas"]), max_lig, "#E8EEF8")}</td>'
+            f'<td class="num">{_macro_cell(int(row["CPC"]), max_cpc, _BRAND["primary_light"])}</td>'
+            f'<td class="num">{_macro_cell(int(row["Acordos"]), max_aco, _BRAND["success_light"])}</td>'
+            f"<td class=\"num\">{rev_cell}</td>"
+            "</tr>"
+        )
+
+    total_lig = int(chart["Ligações atendidas"].sum())
+    total_cpc = int(chart["CPC"].sum())
+    total_aco = int(chart["Acordos"].sum())
+    total_rev = _reversion_pct(total_cpc, total_aco)
+    total_rev_display = f"{total_rev:.1f}%".replace(".", ",") if total_rev is not None else "—"
+
+    squad_note = f" · {squad}" if squad != "Todos" else ""
+    return f"""
+<div class="agent-macro-wrap">
+  <table class="agent-macro-table">
+    <thead>
+      <tr>
+        <th>Agente{squad_note}</th>
+        <th class="num">Ligações atendidas</th>
+        <th class="num">CPC</th>
+        <th class="num">Acordos</th>
+        <th class="num">% Reversão</th>
+      </tr>
+    </thead>
+    <tbody>
+      {''.join(rows_html)}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>Total da squad</td>
+        <td class="num">{_fmt_num(total_lig)}</td>
+        <td class="num">{_fmt_num(total_cpc)}</td>
+        <td class="num">{_fmt_num(total_aco)}</td>
+        <td class="num">{total_rev_display}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+"""
 
 
 def _prepare_details_df(rows: list) -> pd.DataFrame:
@@ -622,7 +633,9 @@ def main() -> None:
     tab1, tab2, tab3 = st.tabs(["Performance", "CPC por tipo", "Detalhes"])
 
     with tab1:
-        st.plotly_chart(_production_chart(df, selected_squad), use_container_width=True, theme=None)
+        st.subheader("Produção por agente")
+        st.caption("Funil operacional · ligações atendidas → CPC → acordos → % reversão")
+        st.markdown(_agent_macro_table_html(df, selected_squad), unsafe_allow_html=True)
 
         c1, c2 = st.columns([1, 1])
         with c1:
@@ -637,13 +650,6 @@ def main() -> None:
                 st.plotly_chart(rev_chart, use_container_width=True, theme=None)
             else:
                 st.caption("Sem dados de reversão por agente.")
-
-        st.subheader("Ranking por agente")
-        styled = df.copy()
-        styled["% Reversão"] = styled["% Reversão"].apply(
-            lambda v: f"{v:.1f}%".replace(".", ",") if pd.notna(v) else "—"
-        )
-        st.dataframe(styled, use_container_width=True, hide_index=True)
 
     with tab2:
         cpc_by_type = summary.get("cpc_by_type", {})

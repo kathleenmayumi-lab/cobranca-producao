@@ -85,14 +85,14 @@ def css() -> str:
         min-width: 0;
     }}
     .velo-mascote {{
-        height: 76px;
+        height: 84px;
         width: auto;
         display: block;
         flex-shrink: 0;
         object-fit: contain;
     }}
     .velo-wordmark {{
-        height: 34px;
+        height: 42px;
         width: auto;
         display: block;
         flex-shrink: 0;
@@ -101,9 +101,9 @@ def css() -> str:
     .velo-title-block {{ display: flex; flex-direction: column; gap: 2px; }}
     .velo-product {{
         color: #ffffff;
-        font-size: 1.7rem;
+        font-size: 2rem;
         font-weight: 800;
-        line-height: 1.2;
+        line-height: 1.15;
         letter-spacing: -0.02em;
     }}
 
@@ -206,6 +206,94 @@ def css() -> str:
         background: {c['accent_light']};
         border: 1px solid #A8D8FF;
         color: {c['accent_dark']};
+    }}
+
+    .agent-macro-wrap {{
+        border: 1px solid {c['border']};
+        border-radius: 14px;
+        overflow: hidden;
+        background: {c['surface']};
+        box-shadow: 0 2px 10px rgba(0, 0, 88, 0.05);
+        margin-bottom: 1rem;
+    }}
+    .agent-macro-table {{
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.92rem;
+    }}
+    .agent-macro-table thead th {{
+        background: linear-gradient(135deg, {c['navy_deep']} 0%, {c['navy']} 55%, {c['primary']} 100%);
+        color: #ffffff;
+        font-family: 'Sora', 'Inter', system-ui, sans-serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 0.85rem 1rem;
+        text-align: left;
+        white-space: nowrap;
+    }}
+    .agent-macro-table thead th.num {{
+        text-align: right;
+    }}
+    .agent-macro-table tbody td {{
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid {c['border']};
+        color: {c['text']};
+        vertical-align: middle;
+    }}
+    .agent-macro-table tbody tr:nth-child(even) td {{
+        background: {c['background']};
+    }}
+    .agent-macro-table tbody tr:hover td {{
+        background: {c['primary_light']};
+    }}
+    .agent-macro-table td.agent-name {{
+        font-weight: 700;
+        color: {c['text']};
+        min-width: 180px;
+    }}
+    .agent-macro-table td.num {{
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        width: 14%;
+    }}
+    .macro-cell {{
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        min-height: 28px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: {c['background']};
+    }}
+    .macro-cell span {{
+        position: relative;
+        z-index: 1;
+        padding: 0 0.5rem;
+        color: {c['text']};
+        font-weight: 700;
+    }}
+    .macro-fill {{
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        border-radius: 8px;
+        opacity: 0.9;
+    }}
+    .agent-macro-table tfoot td {{
+        background: {c['primary_light']};
+        border-top: 2px solid {c['primary']};
+        font-weight: 800;
+        color: {c['text']};
+        padding: 0.85rem 1rem;
+    }}
+    .agent-macro-table tfoot td.num {{
+        text-align: right;
+        font-variant-numeric: tabular-nums;
     }}
 
     #MainMenu {{ visibility: hidden; }}
