@@ -481,6 +481,18 @@ def _filter_details(df: pd.DataFrame, query: str) -> pd.DataFrame:
     return df[mask]
 
 
+def _cpc_agent_rows(agents) -> list[dict]:
+    rows: list[dict[str, Any]] = []
+    if isinstance(agents, dict):
+        return [{"Agente": agent, "Ligações": int(count)} for agent, count in agents.items()]
+    for item in agents:
+        if isinstance(item, dict):
+            rows.append({"Agente": item["agent"], "Ligações": int(item["count"])})
+        elif isinstance(item, (list, tuple)) and len(item) >= 2:
+            rows.append({"Agente": item[0], "Ligações": int(item[1])})
+    return rows
+
+
 def _show_details_table(df: pd.DataFrame, empty_msg: str, search: str) -> None:
     if df.empty and not search.strip():
         st.caption(empty_msg)
@@ -610,10 +622,7 @@ def main() -> None:
         else:
             cols = st.columns(2)
             for i, (qual, agents) in enumerate(cpc_by_type.items()):
-                if isinstance(agents, dict):
-                    agent_rows = [{"Agente": a, "Ligações": c} for a, c in agents.items()]
-                else:
-                    agent_rows = [{"Agente": r["agent"], "Ligações": r["count"]} for r in agents]
+                agent_rows = _cpc_agent_rows(agents)
                 block = pd.DataFrame(agent_rows)
                 total = int(block["Ligações"].sum()) if not block.empty else 0
                 with cols[i % 2]:

@@ -15,7 +15,7 @@ load_dotenv(ROOT / ".env")
 
 from src.api_3cplus import aggregate_production, fetch_calls_for_day
 from src.csv_loader import load_calls_from_config
-from src.snapshot import save_snapshot
+from src.snapshot import build_snapshot_payload, save_snapshot
 from src.snapshot_remote import SnapshotUploadError as DriveSnapshotError
 from src.snapshot_remote import remote_snapshot_configured as drive_snapshot_configured
 from src.snapshot_remote import service_account_email, upload_snapshot as upload_snapshot_drive
@@ -61,7 +61,7 @@ def main() -> int:
     print(f"  Snapshot: {snapshot_path}")
 
     try:
-        sheet_ref = upload_snapshot_sheets(summary)
+        sheet_ref = upload_snapshot_sheets(build_snapshot_payload(summary))
     except SheetsSnapshotError as exc:
         print(f"  Aviso: snapshot na planilha (_Snapshot) não enviado.")
         print(f"  {exc}")
