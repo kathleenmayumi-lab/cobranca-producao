@@ -42,7 +42,14 @@ def breakdown_total(by_type: dict) -> int:
 def breakdown_from_rows(rows: list) -> dict[str, list[dict[str, Any]]]:
     buckets: dict[str, dict[str, int]] = {}
     for row in rows:
-        qualification = row.get("qualification_name") or "Sem finalização"
+        qual = (row.get("qualification_name") or "").strip()
+        status = (row.get("readable_status_text") or "").strip()
+        if qual:
+            qualification = qual
+        elif status and status != "Finalizada":
+            qualification = status
+        else:
+            qualification = "Sem finalização"
         agent = row.get("agent_name") or "Sem agente"
         buckets.setdefault(qualification, {})[agent] = buckets[qualification].get(agent, 0) + 1
 

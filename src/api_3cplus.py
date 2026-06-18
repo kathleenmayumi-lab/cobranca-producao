@@ -107,8 +107,8 @@ def normalize_call(raw: dict[str, Any]) -> dict[str, Any]:
         status = str(status)
     status = str(status).strip()
 
-    # API pode retornar status numérico (7 = finalizada no export CSV)
-    if not status and str(raw.get("status", "")).strip() == "7":
+    raw_status = str(raw.get("status", "")).strip()
+    if status in ("7", "7.0") or (not status and raw_status == "7"):
         status = "Finalizada"
 
     call_date = raw.get("call_date") or raw.get("created_at") or ""
@@ -203,6 +203,32 @@ def _is_finalized_row(row: dict[str, Any]) -> bool:
     )
 
 
+def _improdutiva_type_label(row: dict[str, Any]) -> str:
+    qual = (row.get("qualification_name") or "").strip()
+    if qual:
+        return qual
+    status = (row.get("readable_status_text") or "").strip()
+    if status and status != "Finalizada":
+        return status
+    return "Sem finalização"
+
+
+def _is_improdutiva_row(row: dict[str, Any]) -> bool:
+    """Finalizações que não são CPC — alinhado ao CPC por tipo (com agente)."""
+    if row.get("is_cpc"):
+        return False
+    qual = (row.get("qualification_name") or "").strip()
+    agent = (row.get("agent_name") or "").strip()
+    if qual:
+        return True
+    if _is_finalized_row(row):
+        return True
+    status = (row.get("readable_status_text") or "").strip()
+    if status and status != "Finalizada":
+        return bool(agent)
+    return str(row.get("status", "")).strip() == "7" and bool(agent)
+
+
 def _count_finalized_by_agent(rows: list[dict[str, Any]]) -> list[tuple[str, int]]:
     counts: dict[str, int] = {}
     for row in rows:
@@ -240,9 +266,9 @@ def _improdutiva_breakdown_by_type(
     buckets: dict[str, dict[str, int]] = {}
 
     for row in normalized:
-        if not _is_finalized_row(row) or row.get("is_cpc"):
+        if not _is_improdutiva_row(row):
             continue
-        qualification = row["qualification_name"] or "Sem finalização"
+        qualification = _improdutiva_type_label(row)
         agent = row["agent_name"] or "Sem agente"
         buckets.setdefault(qualification, {})[agent] = buckets[qualification].get(agent, 0) + 1
 
@@ -266,7 +292,7 @@ def aggregate_production(calls: list[dict[str, Any]]) -> dict[str, Any]:
     production = [c for c in normalized if c["is_production"]]
     cpc = [c for c in normalized if c["is_cpc"]]
     finalized = [c for c in normalized if _is_finalized_row(c)]
-    improdutiva = [c for c in finalized if not c["is_cpc"]]
+    improdutiva = [c for c in normalized if _is_improdutiva_row(c)]
 
     cpc_ranking = _count_by_agent(normalized, "is_cpc")
     acordos_ranking = _count_by_agent(normalized, "is_production")

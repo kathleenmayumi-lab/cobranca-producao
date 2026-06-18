@@ -402,6 +402,31 @@ def _require_viewer_login() -> bool:
     return True
 
 
+def _apply_streamlit_secrets_env() -> None:
+    try:
+        token = st.secrets.get("THREECPLUS_API_TOKEN", "")
+        if token:
+            os.environ["THREECPLUS_API_TOKEN"] = str(token)
+        for key in ("DATA_SOURCE", "THREECPLUS_API_BASE", "CSV_IMPORT_FOLDER"):
+            value = st.secrets.get(key, "")
+            if value:
+                os.environ[key] = str(value)
+    except Exception:
+        pass
+
+
+def _load_calls_dashboard(mode: str) -> tuple[list, str]:
+    _apply_streamlit_secrets_env()
+    if mode == "cloud":
+        token = os.getenv("THREECPLUS_API_TOKEN", "").strip()
+        if token:
+            from src.api_3cplus import fetch_calls_for_day
+
+            calls = fetch_calls_for_day()
+            return calls, "API 3C Plus (nuvem)"
+    return load_calls()
+
+
 def _upload_snapshot(summary: dict) -> None:
     payload = build_snapshot_payload(summary)
     try:
@@ -415,15 +440,17 @@ def _upload_snapshot(summary: dict) -> None:
             pass
 
 
-def _maybe_reaggregate(summary: dict | None) -> tuple[dict | None, str | None]:
+def _maybe_reaggregate(summary: dict | None, mode: str) -> tuple[dict | None, str | None]:
     """Reagrega ligações quando o snapshot não traz improdutivas (dados antigos)."""
     if not summary:
         return None, None
     if summary_has_improdutiva_data(summary):
         return enrich_summary_improdutivas(summary), None
     try:
-        calls, origin = load_calls()
+        calls, origin = _load_calls_dashboard(mode)
         fresh = aggregate_production(calls)
+        if not summary_has_improdutiva_data(fresh):
+            return enrich_summary_improdutivas(summary), None
         save_snapshot(fresh)
         _upload_snapshot(fresh)
         return fresh, origin
@@ -442,14 +469,14 @@ def fetch_data(refresh: bool, mode: str) -> dict:
                 "summary": None,
                 "origin": "Planilha Google (_Snapshot) — rode run.py no PC principal",
             }
-        summary, reorigin = _maybe_reaggregate(summary)
+        summary, reorigin = _maybe_reaggregate(summary, mode)
         origin = "Planilha Google (visualização remota)"
         if reorigin:
             origin = f"{reorigin} · dados atualizados"
         return {"summary": summary, "origin": origin}
 
     if refresh:
-        calls, origin = load_calls()
+        calls, origin = _load_calls_dashboard(mode)
         summary = aggregate_production(calls)
         save_snapshot(summary)
         _upload_snapshot(summary)
@@ -457,7 +484,7 @@ def fetch_data(refresh: bool, mode: str) -> dict:
 
     snapshot = load_snapshot()
     if snapshot:
-        summary, reorigin = _maybe_reaggregate(snapshot)
+        summary, reorigin = _maybe_reaggregate(snapshot, mode)
         origin = "Snapshot (data/latest.json)"
         if reorigin:
             origin = f"{reorigin} · snapshot atualizado"
@@ -466,7 +493,7 @@ def fetch_data(refresh: bool, mode: str) -> dict:
     if remote_snapshot_configured():
         remote = download_snapshot_sheets()
         if remote:
-            summary, reorigin = _maybe_reaggregate(remote)
+            summary, reorigin = _maybe_reaggregate(remote, mode)
             origin = "Planilha Google (_Snapshot)"
             if reorigin:
                 origin = f"{reorigin} · dados atualizados"
@@ -475,13 +502,13 @@ def fetch_data(refresh: bool, mode: str) -> dict:
     if drive_snapshot_configured():
         remote = download_snapshot_drive()
         if remote:
-            summary, reorigin = _maybe_reaggregate(remote)
+            summary, reorigin = _maybe_reaggregate(remote, mode)
             origin = "Google Drive (snapshot)"
             if reorigin:
                 origin = f"{reorigin} · dados atualizados"
             return {"summary": summary, "origin": origin}
 
-    calls, origin = load_calls()
+    calls, origin = _load_calls_dashboard(mode)
     summary = aggregate_production(calls)
     save_snapshot(summary)
     _upload_snapshot(summary)
@@ -703,6 +730,9 @@ def main() -> None:
         st.markdown("<div style='margin-top:1.6rem'></div>", unsafe_allow_html=True)
         refresh_label = "Recarregar" if is_cloud else "Atualizar agora"
         refresh = st.button(refresh_label, type="primary", use_container_width=True)
+
+    if refresh:
+        fetch_data.clear()
 
     payload = fetch_data(refresh=refresh, mode=mode)
     base_summary = payload["summary"]
