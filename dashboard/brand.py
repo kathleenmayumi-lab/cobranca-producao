@@ -74,9 +74,8 @@ def css() -> str:
         gap: 14px;
         min-width: 0;
     }}
-    .velo-logo svg {{ height: 36px; width: auto; display: block; }}
+    .velo-logo svg {{ height: 58px; width: auto; display: block; flex-shrink: 0; }}
     .velo-logo svg text {{ fill: #ffffff !important; }}
-    .velo-logo svg circle {{ fill: {c['primary']} !important; }}
     .velo-title-block {{ display: flex; flex-direction: column; gap: 2px; }}
     .velo-product {{
         color: #ffffff;
@@ -213,20 +212,23 @@ def css() -> str:
 """
 
 
-def header_html(subtitle: str) -> str:
+def header_html(subtitle: str = "") -> str:
     brand = load_brand()
     logo = logo_svg_inline()
     if logo.startswith("<svg"):
         logo_block = f'<div class="velo-logo">{logo}</div>'
     else:
         logo_block = logo
+    subtitle_html = (
+        f'<div class="velo-tagline">{subtitle}</div>' if subtitle.strip() else ""
+    )
     return f"""
 <div class="velo-header">
   <div class="velo-header-left">
     {logo_block}
     <div class="velo-title-block">
       <div class="velo-product">{brand['product']}</div>
-      <div class="velo-tagline">{subtitle}</div>
+      {subtitle_html}
     </div>
   </div>
   <div class="velo-badge">{brand['company']}</div>

@@ -132,7 +132,7 @@ def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
             text=chart["CPC"],
             texttemplate="%{text}",
             textposition="outside",
-            textfont=dict(color=_BRAND["primary_dark"], size=11),
+            textfont=dict(color=_BRAND["text"], size=11),
             hovertemplate="<b>%{y}</b><br>CPC: %{x}<extra></extra>",
         )
     )
@@ -150,7 +150,7 @@ def _production_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
             text=chart["Acordos"],
             texttemplate="%{text}",
             textposition="outside",
-            textfont=dict(color=_BRAND["accent_dark"], size=11),
+            textfont=dict(color=_BRAND["text"], size=11),
             customdata=rev,
             hovertemplate=(
                 "<b>%{y}</b><br>Acordos: %{x}<br>Reversão: %{customdata:.1f}%<extra></extra>"
@@ -237,18 +237,15 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     if chart.empty:
         return go.Figure()
 
-    colors = [
-        "#ef4444" if v < 40 else "#f59e0b" if v < 60 else _BRAND["accent"]
-        for v in chart["% Reversão"]
-    ]
     fig = go.Figure(
         go.Bar(
             x=chart["% Reversão"],
             y=chart["Agente"],
             orientation="h",
-            marker=dict(color=colors, cornerradius=6),
+            marker=dict(color=_BRAND["primary"], cornerradius=6),
             text=[f"{v:.1f}%".replace(".", ",") for v in chart["% Reversão"]],
             textposition="outside",
+            textfont=dict(color=_BRAND["text"], size=11),
             hovertemplate="<b>%{y}</b><br>Reversão: %{x:.1f}%<extra></extra>",
         )
     )
@@ -450,13 +447,11 @@ def main() -> None:
     if is_cloud:
         _require_viewer_login()
 
-    tagline = brand.load_brand()["tagline"]
-    if is_cloud:
-        tagline += " · modo visualização"
+    subtitle = "Modo visualização" if is_cloud else ""
 
     head_l, head_r = st.columns([5, 1])
     with head_l:
-        st.markdown(brand.header_html(tagline), unsafe_allow_html=True)
+        st.markdown(brand.header_html(subtitle), unsafe_allow_html=True)
     with head_r:
         st.markdown("<div style='margin-top:1.6rem'></div>", unsafe_allow_html=True)
         refresh_label = "Recarregar" if is_cloud else "Atualizar agora"
