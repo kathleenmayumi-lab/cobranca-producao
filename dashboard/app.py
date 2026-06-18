@@ -731,20 +731,54 @@ def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos") -> str:
 """
 
 
+def _detail_row_key(row: dict) -> tuple[str, ...]:
+    return (
+        str(row.get("contract_number", "")).strip(),
+        str(row.get("agent_name", "")).strip(),
+        str(row.get("call_date", "")).strip(),
+        str(row.get("qualification_name", "")).strip(),
+        str(row.get("number", "")).strip(),
+    )
+
+
+def _all_contract_details_rows(summary: dict) -> list[dict]:
+    """CPC + improdutivas em uma única lista (sem duplicar acordos/CPC)."""
+    merged: list[dict] = []
+    seen: set[tuple[str, ...]] = set()
+    for key in ("cpc_rows", "improdutiva_rows"):
+        for row in summary.get(key, []):
+            if not isinstance(row, dict):
+                continue
+            dedupe_key = _detail_row_key(row)
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+            merged.append(dict(row))
+    merged.sort(key=lambda item: str(item.get("call_date", "")), reverse=True)
+    return merged
+
+
 def _prepare_details_df(rows: list) -> pd.DataFrame:
     df = pd.DataFrame(rows)
     if df.empty:
         return df
+    if "is_cpc" in df.columns:
+        df["cpc_label"] = df["is_cpc"].map(lambda value: "Sim" if bool(value) else "Não")
+    else:
+        df["cpc_label"] = "Não"
     rename = {
         "agent_name": "Agente",
         "contract_number": "Nº Contrato",
+        "cpc_label": "CPC",
         "qualification_name": "Finalização",
         "call_date": "Data/Hora",
         "campaign_name": "Campanha",
         "number": "Telefone",
     }
     cols = [c for c in rename if c in df.columns]
-    return df[cols].rename(columns=rename)
+    out = df[cols].rename(columns=rename)
+    order = ["Agente", "Nº Contrato", "CPC", "Finalização", "Data/Hora", "Campanha", "Telefone"]
+    return out[[col for col in order if col in out.columns]]
 
 
 def _filter_details(df: pd.DataFrame, query: str) -> pd.DataFrame:
@@ -943,24 +977,15 @@ def main() -> None:
     with tab4:
         search = st.text_input(
             "Pesquisar",
-            placeholder="Ex.: número do contrato, agente, finalização ou telefone",
+            placeholder="Ex.: contrato, agente, CPC, finalização ou telefone",
             key="detalhes_search",
         )
 
-        prod = _filter_details(
-            _prepare_details_df(summary.get("production_rows", [])),
+        all_details = _filter_details(
+            _prepare_details_df(_all_contract_details_rows(summary)),
             search,
         )
-        cpc_all = _filter_details(
-            _prepare_details_df(summary.get("cpc_rows", [])),
-            search,
-        )
-
-        t1, t2 = st.tabs(["Acordos", "Todos CPC"])
-        with t1:
-            _show_details_table(prod, "Nenhum acordo no período.", search)
-        with t2:
-            _show_details_table(cpc_all, "Nenhum CPC no período.", search)
+        _show_details_table(all_details, "Nenhum registro no período.", search)
 
 
 if __name__ == "__main__":
