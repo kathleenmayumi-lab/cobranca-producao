@@ -1,0 +1,12 @@
+{
+  "cpc_qualifications": [
+    "Suspeita de Fraude",
+    "Queda cliente",
+    "Alega pagamento",
+    "Não revertido",
+    "Acordo formalizado",
+    "Agendamento / Retorno",
+    "Sem interesse"
+  ],
+  "production_qualification": "Acordo formalizado"
+}

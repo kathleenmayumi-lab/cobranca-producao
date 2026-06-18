@@ -1,0 +1,14 @@
+.env
+credentials/
+credentials.json
+service_account.json
+service_account.json.json
+**/service_account*.json
+__pycache__/
+*.pyc
+.venv/
+output/
+data/
+data/latest.json
+.streamlit/secrets.toml
+streamlit_secrets_paste.toml
