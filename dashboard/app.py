@@ -461,6 +461,14 @@ def _maybe_reaggregate(summary: dict | None, mode: str) -> tuple[dict | None, st
 @st.cache_data(ttl=120, show_spinner=False)
 def fetch_data(refresh: bool, mode: str) -> dict:
     if mode == "cloud":
+        if refresh:
+            try:
+                calls, origin = _load_calls_dashboard(mode)
+                summary = aggregate_production(calls)
+                _upload_snapshot(summary)
+                return {"summary": summary, "origin": f"{origin} · atualizado agora"}
+            except Exception:
+                pass
         summary = download_snapshot_sheets()
         if not summary and drive_snapshot_configured():
             summary = download_snapshot_drive()

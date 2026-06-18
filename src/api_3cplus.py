@@ -13,10 +13,15 @@ load_dotenv()
 
 from src.metrics_config import cpc_qualifications, cpc_qualifications_ordered, production_qualification
 
-API_BASE = os.getenv("THREECPLUS_API_BASE", "https://app.3c.plus/api/v1")
-API_TOKEN = os.getenv("THREECPLUS_API_TOKEN", "")
-
 PRODUCTION_QUALIFICATION = production_qualification()
+
+
+def _api_base() -> str:
+    return os.getenv("THREECPLUS_API_BASE", "https://app.3c.plus/api/v1").strip()
+
+
+def _api_token() -> str:
+    return os.getenv("THREECPLUS_API_TOKEN", "").strip()
 
 
 def _headers() -> dict[str, str]:
@@ -24,7 +29,7 @@ def _headers() -> dict[str, str]:
 
 
 def _params(extra: dict[str, Any] | None = None) -> dict[str, Any]:
-    params: dict[str, Any] = {"api_token": API_TOKEN}
+    params: dict[str, Any] = {"api_token": _api_token()}
     if extra:
         params.update(extra)
     return params
@@ -32,7 +37,7 @@ def _params(extra: dict[str, Any] | None = None) -> dict[str, Any]:
 
 def fetch_calls_for_day(target_day: date | None = None, page_limit: int = 500) -> list[dict[str, Any]]:
     """Busca ligações do dia via GET /calls (com paginação)."""
-    if not API_TOKEN:
+    if not _api_token():
         raise ValueError("THREECPLUS_API_TOKEN não configurado no arquivo .env")
 
     target_day = target_day or date.today()
@@ -44,7 +49,7 @@ def fetch_calls_for_day(target_day: date | None = None, page_limit: int = 500) -
 
     while True:
         response = requests.get(
-            f"{API_BASE}/calls",
+            f"{_api_base()}/calls",
             headers=_headers(),
             params=_params(
                 {
