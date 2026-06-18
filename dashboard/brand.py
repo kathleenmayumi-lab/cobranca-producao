@@ -217,9 +217,8 @@ def css() -> str:
 """
 
 
-def header_html(subtitle: str = "") -> str:
-    """HTML do cabeçalho. `subtitle` é ignorado (compatibilidade com versões antigas)."""
-    _ = subtitle
+def header_html(*_args: object, **_kwargs: object) -> str:
+    """HTML do cabeçalho. Aceita qualquer assinatura (compatibilidade)."""
     try:
         brand_data = load_brand()
         product = str(brand_data.get("product") or "Painel de Cobrança")

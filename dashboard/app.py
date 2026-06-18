@@ -40,6 +40,46 @@ st.markdown(brand.css(), unsafe_allow_html=True)
 
 _BRAND = brand.colors()
 
+MASCOTE_CDN = "https://velotax.com.br/images/mascote/velo-afirmativo.png"
+LOGO_CDN = "https://velotax.com.br/images/logos/velotax-logo-branco.png"
+
+
+def _build_header_html() -> str:
+    """Monta o header sem depender da assinatura de brand.header_html no Cloud."""
+    product = "Painel de Cobrança"
+    company = "Velotax"
+    mascote = MASCOTE_CDN
+    wordmark = LOGO_CDN
+    try:
+        cfg = brand.load_brand()
+        product = str(cfg.get("product") or product)
+        company = str(cfg.get("company") or company)
+    except Exception:
+        pass
+    for attr, fallback in (("mascote_url", MASCOTE_CDN), ("logo_url", LOGO_CDN)):
+        try:
+            fn = getattr(brand, attr, None)
+            if callable(fn):
+                value = fn()
+                if isinstance(value, str) and value.strip():
+                    if attr == "mascote_url":
+                        mascote = value
+                    else:
+                        wordmark = value
+        except Exception:
+            pass
+    return f"""
+<div class="velo-header">
+  <div class="velo-header-left">
+    <img class="velo-mascote" src="{mascote}" alt="Velo, mascote oficial do Velotax" />
+    <div class="velo-title-block">
+      <div class="velo-product">{product}</div>
+    </div>
+  </div>
+  <img class="velo-wordmark" src="{wordmark}" alt="{company}" />
+</div>
+"""
+
 
 def _fmt_num(value: int) -> str:
     return f"{value:,}".replace(",", ".")
@@ -474,7 +514,7 @@ def main() -> None:
 
     head_l, head_r = st.columns([5, 1])
     with head_l:
-        st.markdown(brand.header_html(), unsafe_allow_html=True)
+        st.markdown(_build_header_html(), unsafe_allow_html=True)
     with head_r:
         st.markdown("<div style='margin-top:1.6rem'></div>", unsafe_allow_html=True)
         refresh_label = "Recarregar" if is_cloud else "Atualizar agora"
