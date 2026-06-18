@@ -322,11 +322,15 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     rev_title = "Eficiência de reversão"
     if squad != "Todos":
         rev_title = f"{rev_title} · {squad}"
-    layout = _chart_theme(rev_title, height=420)
-    layout["margin"] = dict(l=4, r=52, t=56, b=20)
+    layout = _chart_theme(rev_title, height=440)
+    layout["margin"] = dict(l=4, r=64, t=48, b=52)
     layout["xaxis"] = dict(
         range=[0, xmax],
-        title=dict(text="Reversão sobre CPC (%)", font=dict(color=_CHART_TEXT, size=12)),
+        title=dict(
+            text="Reversão sobre CPC (%)",
+            font=dict(color=_CHART_TEXT, size=11),
+            standoff=20,
+        ),
         tickfont=dict(color=_CHART_TEXT, size=11),
         gridcolor="#E8EEF8",
         zeroline=False,
@@ -340,27 +344,7 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
         ticktext=agents,
     )
     layout["showlegend"] = False
-    layout["annotations"] = [
-        dict(
-            x=_REV_META_PCT,
-            y=1.06,
-            yref="paper",
-            xref="x",
-            text="Meta 70%",
-            showarrow=False,
-            font=dict(size=10, color=_BRAND["text_muted"]),
-        ),
-        dict(
-            x=0.99,
-            y=1.06,
-            yref="paper",
-            xref="paper",
-            text="Azul = meta atingida",
-            showarrow=False,
-            xanchor="right",
-            font=dict(size=10, color=_BRAND["text_muted"]),
-        ),
-    ]
+    layout["annotations"] = []
     fig.update_layout(**layout)
     return _finalize_chart(fig)
 
@@ -928,7 +912,7 @@ def main() -> None:
             else:
                 st.caption("Sem acordos para exibir participação.")
         with c2:
-            st.caption("Top 10 agentes com CPC ≥ 3 · faixa verde = meta de 70%")
+            st.caption("Agentes com CPC ≥ 3 · azul = meta 70% atingida · faixa verde à direita da linha")
             rev_chart = _reversion_chart(df, selected_squad)
             if len(rev_chart.data) > 0:
                 st.plotly_chart(rev_chart, use_container_width=True, theme=None)
