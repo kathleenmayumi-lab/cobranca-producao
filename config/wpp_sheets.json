@@ -1,30 +1,45 @@
 {
-  "squad": "Early Stage",
   "worksheet": "",
   "agents": [
     {
       "agent": "Reomar Amaro de Oliveira Júnior",
-      "spreadsheet_id": "133mf1OupF0RH4Pyx5ssMmfg69Q4ygi3uej7IsWwOmHo"
+      "spreadsheet_id": "133mf1OupF0RH4Pyx5ssMmfg69Q4ygi3uej7IsWwOmHo",
+      "squad": "Early Stage"
     },
     {
       "agent": "Douglas Alves",
-      "spreadsheet_id": "1zySMzMzMDHYBLJ5Wbg-skFKyRQcd2KJox_8z-y0o4Hc"
+      "spreadsheet_id": "1zySMzMzMDHYBLJ5Wbg-skFKyRQcd2KJox_8z-y0o4Hc",
+      "squad": "Early Stage"
     },
     {
       "agent": "Isabelly Simão",
-      "spreadsheet_id": "1IeXHg9lKOEFe8KQPxKlGxLbdYH3pAQt0NgZq4uZmkzE"
+      "spreadsheet_id": "1IeXHg9lKOEFe8KQPxKlGxLbdYH3pAQt0NgZq4uZmkzE",
+      "squad": "Early Stage"
     },
     {
       "agent": "Andrielle Da Silva Froes",
-      "spreadsheet_id": "14l43anvfLXHmsU_QjPKozeqwmpTjGHhVs2Ab2W763F0"
+      "spreadsheet_id": "14l43anvfLXHmsU_QjPKozeqwmpTjGHhVs2Ab2W763F0",
+      "squad": "Early Stage"
     },
     {
       "agent": "Joissi Naini do Nascimento",
-      "spreadsheet_id": "1ZJvOMeT7tnWwD7HFuSyn5z-LdD7_mJa3bqi1mGLaqtU"
+      "spreadsheet_id": "1ZJvOMeT7tnWwD7HFuSyn5z-LdD7_mJa3bqi1mGLaqtU",
+      "squad": "Early Stage"
     },
     {
       "agent": "Marina Dubieux",
-      "spreadsheet_id": "1UU3WCG0CubmqTDKGyq_icNaRiT8LKvlZgfvIP66q-cQ"
+      "spreadsheet_id": "1UU3WCG0CubmqTDKGyq_icNaRiT8LKvlZgfvIP66q-cQ",
+      "squad": "Early Stage"
+    },
+    {
+      "agent": "Ricardo Henrique Xavier Martins",
+      "spreadsheet_id": "1bOkVfh_mi0iqXLkmSK8zST5YX3YEJ51J7dRJ82MiNt4",
+      "squad": "IRPF"
+    },
+    {
+      "agent": "Anderson Lopes",
+      "spreadsheet_id": "1oIPD91qCn3RFJ87BEWolkuEAiUmwMYaqdqGey1qDoyA",
+      "squad": "IRPF"
     }
   ]
 }
