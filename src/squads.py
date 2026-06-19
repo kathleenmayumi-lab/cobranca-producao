@@ -51,7 +51,7 @@ def _agents_from_summary(summary: dict[str, Any]) -> set[str]:
             names.add(row.get("agent", ""))
         elif isinstance(row, (list, tuple)) and row:
             names.add(str(row[0]))
-    for key in ("cpc_rows", "production_rows", "improdutiva_rows"):
+    for key in ("cpc_rows", "production_rows", "improdutiva_rows", "wpp_production_rows"):
         for row in summary.get(key, []):
             names.add(row.get("agent_name", ""))
     return {name for name in names if name}
@@ -142,11 +142,18 @@ def filter_summary(summary: dict[str, Any], squad_label: str) -> dict[str, Any]:
     improdutiva_rows = [
         row for row in summary.get("improdutiva_rows", []) if row.get("agent_name") in agents
     ]
+    wpp_production_rows = [
+        row for row in summary.get("wpp_production_rows", []) if row.get("agent_name") in agents
+    ]
     cpc_by_type = _filter_breakdown_by_type(summary.get("cpc_by_type", {}), agents)
     improdutivas_by_type = _filter_breakdown_by_type(summary.get("improdutivas_by_type", {}), agents)
 
     total_cpc = sum(int(row["cpc"]) for row in agent_stats)
-    total_production = sum(int(row["acordos"]) for row in agent_stats)
+    total_discador = sum(
+        int(row.get("acordos_discador", row.get("acordos", 0))) for row in agent_stats
+    )
+    total_wpp = sum(int(row.get("acordos_wpp", 0)) for row in agent_stats)
+    total_production = total_discador + total_wpp
     total_improdutiva = (
         len(improdutiva_rows)
         if improdutiva_rows
@@ -164,9 +171,12 @@ def filter_summary(summary: dict[str, Any], squad_label: str) -> dict[str, Any]:
             "cpc_rows": cpc_rows,
             "production_rows": production_rows,
             "improdutiva_rows": improdutiva_rows,
+            "wpp_production_rows": wpp_production_rows,
             "cpc_by_type": cpc_by_type,
             "improdutivas_by_type": improdutivas_by_type,
             "total_cpc": total_cpc,
+            "total_production_discador": total_discador,
+            "total_wpp_production": total_wpp,
             "total_production": total_production,
             "total_improdutiva": total_improdutiva,
             "total_finalized": total_finalized,

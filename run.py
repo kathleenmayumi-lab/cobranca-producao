@@ -15,13 +15,14 @@ load_dotenv(ROOT / ".env")
 
 from src.api_3cplus import aggregate_production, fetch_calls_for_day
 from src.csv_loader import load_calls_from_config
-from src.snapshot import build_snapshot_payload, save_snapshot
+from src.snapshot import build_cloud_snapshot_payload, save_snapshot
 from src.snapshot_remote import SnapshotUploadError as DriveSnapshotError
 from src.snapshot_remote import remote_snapshot_configured as drive_snapshot_configured
 from src.snapshot_remote import service_account_email, upload_snapshot as upload_snapshot_drive
 from src.snapshot_sheets import SnapshotUploadError as SheetsSnapshotError
 from src.snapshot_sheets import upload_snapshot as upload_snapshot_sheets
 from src.sheets import update_dashboard
+from src.wpp_merge import apply_wpp_to_summary
 
 
 def load_calls() -> tuple[list[dict], str]:
@@ -54,15 +55,20 @@ def main() -> int:
     print(f"  {len(calls)} ligações do dia")
 
     summary = aggregate_production(calls)
+    summary, wpp_warnings = apply_wpp_to_summary(summary)
     print(f"  CPC: {summary['total_cpc']}")
-    print(f"  Produção (Acordo formalizado): {summary['total_production']}")
+    print(f"  Produção discador: {summary.get('total_production_discador', summary['total_production'])}")
+    print(f"  Produção WPP (Early Stage): {summary.get('total_wpp_production', 0)}")
+    print(f"  Produção total: {summary['total_production']}")
     print(f"  Improdutivas: {summary.get('total_improdutiva', 0)}")
+    for warning in wpp_warnings:
+        print(f"  Aviso WPP: {warning}")
 
     snapshot_path = save_snapshot(summary)
     print(f"  Snapshot: {snapshot_path}")
 
     try:
-        sheet_ref = upload_snapshot_sheets(build_snapshot_payload(summary))
+        sheet_ref = upload_snapshot_sheets(build_cloud_snapshot_payload(summary))
     except SheetsSnapshotError as exc:
         print(f"  Aviso: snapshot na planilha (_Snapshot) não enviado.")
         print(f"  {exc}")
@@ -70,6 +76,7 @@ def main() -> int:
     else:
         if sheet_ref:
             print(f"  Snapshot remoto (planilha aba _Snapshot): ok")
+            print(f"  Improdutivas no snapshot: {summary.get('total_improdutiva', 0)}")
 
     if drive_snapshot_configured():
         try:

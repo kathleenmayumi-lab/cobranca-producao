@@ -26,8 +26,10 @@ from src.snapshot import (
     build_cloud_snapshot_payload,
     build_snapshot_payload,
     enrich_summary_improdutivas,
+    enrich_summary_wpp,
     load_snapshot,
     merge_improdutivas_from,
+    merge_wpp_from,
     save_snapshot,
     summary_has_improdutiva_data,
 )
@@ -37,6 +39,8 @@ from src.snapshot_remote import upload_snapshot as upload_snapshot_drive
 from src.snapshot_sheets import download_snapshot as download_snapshot_sheets
 from src.snapshot_sheets import remote_snapshot_configured, upload_snapshot as upload_snapshot_sheets
 from src.squads import agents_for_squad, filter_summary, squad_labels
+from src.wpp_loader import wpp_configured
+from src.wpp_merge import apply_wpp_to_summary
 
 from dashboard import brand
 
@@ -206,16 +210,17 @@ def _finalize_chart(fig: go.Figure) -> go.Figure:
     return fig
 
 
-def _share_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
+def _share_chart(df: pd.DataFrame, squad: str = "Todos", *, show_wpp: bool = False) -> go.Figure:
     """Donut — participação de cada agente na produção total."""
-    active = df[df["Acordos"] > 0].sort_values("Acordos", ascending=False)
+    value_col = "Total" if show_wpp and "Total" in df.columns else "Acordos"
+    active = df[df[value_col] > 0].sort_values(value_col, ascending=False)
     if active.empty:
         return go.Figure()
 
     top = active.head(8)
-    others = int(active["Acordos"].iloc[8:].sum()) if len(active) > 8 else 0
+    others = int(active[value_col].iloc[8:].sum()) if len(active) > 8 else 0
     labels = list(top["Agente"])
-    values = list(top["Acordos"])
+    values = list(top[value_col])
     if others > 0:
         labels.append("Outros")
         values.append(others)
@@ -278,7 +283,8 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     agents_full = chart["Agente"].tolist()
     agents = [_short_agent_label(name) for name in agents_full]
     cpcs = chart["CPC"].astype(int).tolist()
-    acordos = chart["Acordos"].astype(int).tolist()
+    acordos_col = "Discador" if "Discador" in chart.columns else "Acordos"
+    acordos = chart[acordos_col].astype(int).tolist()
     xmax = min(110.0, max(max(values) * 1.15 + 12, 88.0))
 
     bar_colors = [
@@ -353,6 +359,31 @@ def _reversion_pct(cpc: int, acordos: int) -> float | None:
     if cpc <= 0:
         return None
     return round((acordos / cpc) * 100, 1)
+
+
+def _wpp_share_pct(wpp: int, total: int) -> float | None:
+    if total <= 0:
+        return None
+    return round((wpp / total) * 100, 1)
+
+
+def _pct_display(value: float | None) -> str:
+    if value is None or pd.isna(value):
+        return "—"
+    return f"{float(value):.1f}%".replace(".", ",")
+
+
+def _wpp_share_value_cell(pct: float | None) -> str:
+    if pct is None or pd.isna(pct):
+        return '<div class="macro-cell"><span>—</span></div>'
+    pct_val = float(pct)
+    pct_display = _pct_display(pct_val)
+    width = min(100.0, pct_val)
+    return (
+        f'<div class="macro-cell wpp-share-cell">'
+        f'<div class="macro-fill" style="width:{width:.1f}%;background:#C8E6C9;"></div>'
+        f"<span>{pct_display}</span></div>"
+    )
 
 
 def _reversion_icon_html(rev: float) -> str:
@@ -449,6 +480,43 @@ def _load_calls_dashboard(mode: str, ref_date: str | None = None) -> tuple[list,
     return load_calls()
 
 
+def _with_wpp(summary: dict) -> dict:
+    merged, _warnings = apply_wpp_to_summary(summary)
+    return merged
+
+
+def _finalize_summary(summary: dict | None, mode: str) -> dict | None:
+    """Enriquece snapshot com improdutivas e WPP (inclui leitura ao vivo na nuvem)."""
+    if not summary:
+        return None
+    summary = enrich_summary_improdutivas(summary)
+    summary = enrich_summary_wpp(summary)
+    bundled = load_snapshot()
+    summary = merge_wpp_from(bundled or {}, summary)
+    if mode == "cloud" and wpp_configured():
+        try:
+            summary, _warnings = apply_wpp_to_summary(summary)
+        except Exception:
+            summary = enrich_summary_wpp(summary)
+    return summary
+
+
+def _discador_total(summary: dict) -> int:
+    return int(summary.get("total_production_discador", summary.get("total_production", 0)))
+
+
+def _wpp_total(summary: dict) -> int:
+    return int(summary.get("total_wpp_production", 0))
+
+
+def _wpp_share_total(summary: dict) -> float | None:
+    return _wpp_share_pct(_wpp_total(summary), int(summary.get("total_production", 0)))
+
+
+def _show_wpp_metrics(summary: dict, squad: str) -> bool:
+    return squad == "Early Stage" or _wpp_total(summary) > 0
+
+
 def _upload_snapshot(summary: dict) -> str | None:
     payload = build_cloud_snapshot_payload(summary)
     upload_error: str | None = None
@@ -482,7 +550,7 @@ def _reaggregate_summary(
         return enrich_summary_improdutivas(summary), None, None
     try:
         calls, origin = _load_calls_dashboard(mode, ref_date=ref_date)
-        fresh = aggregate_production(calls)
+        fresh = _with_wpp(aggregate_production(calls))
         if not summary_has_improdutiva_data(fresh):
             return (
                 enrich_summary_improdutivas(summary),
@@ -504,6 +572,7 @@ def _reaggregate_summary(
         bundled = load_snapshot()
         if bundled and summary_has_improdutiva_data(bundled):
             merged = merge_improdutivas_from(bundled, summary)
+            merged = merge_wpp_from(bundled, merged)
             return merged, "Snapshot local (data/latest.json)", None
         return enrich_summary_improdutivas(summary), None, str(exc)
 
@@ -530,6 +599,7 @@ def fetch_data(refresh: bool, mode: str) -> dict:
                 if remote:
                     bundled = load_snapshot()
                     summary = merge_improdutivas_from(bundled or {}, remote)
+                    summary = merge_wpp_from(bundled or {}, summary)
                     return {
                         "summary": summary,
                         "origin": "Planilha Google (visualização remota)",
@@ -545,6 +615,7 @@ def fetch_data(refresh: bool, mode: str) -> dict:
             }
         bundled = load_snapshot()
         summary = merge_improdutivas_from(bundled or {}, summary)
+        summary = merge_wpp_from(bundled or {}, summary)
         summary, reorigin, regen_error = _reaggregate_summary(
             summary, mode, ref_date=summary.get("date")
         )
@@ -557,7 +628,7 @@ def fetch_data(refresh: bool, mode: str) -> dict:
 
     if refresh:
         calls, origin = _load_calls_dashboard(mode)
-        summary = aggregate_production(calls)
+        summary = _with_wpp(aggregate_production(calls))
         save_snapshot(summary)
         upload_err = _upload_snapshot(summary)
         return {
@@ -599,7 +670,7 @@ def fetch_data(refresh: bool, mode: str) -> dict:
             return {"summary": summary, "origin": origin, "reload_error": regen_error}
 
     calls, origin = _load_calls_dashboard(mode)
-    summary = aggregate_production(calls)
+    summary = _with_wpp(aggregate_production(calls))
     save_snapshot(summary)
     upload_err = _upload_snapshot(summary)
     return {"summary": summary, "origin": origin, "reload_error": upload_err}
@@ -637,7 +708,7 @@ def _normalize_agent_stats(rows: list) -> list[dict]:
     return normalized
 
 
-def _agents_df(summary: dict) -> pd.DataFrame:
+def _agents_df(summary: dict, *, show_wpp: bool = False) -> pd.DataFrame:
     rows = _normalize_agent_stats(summary.get("agent_stats") or [])
 
     df = pd.DataFrame(rows)
@@ -646,16 +717,50 @@ def _agents_df(summary: dict) -> pd.DataFrame:
     if "finalizadas" not in df.columns:
         df["finalizadas"] = 0
     df["finalizadas"] = df["finalizadas"].fillna(0).astype(int)
-    df["% Reversão"] = df.apply(lambda r: _reversion_pct(int(r["cpc"]), int(r["acordos"])), axis=1)
-    df = df.sort_values(["acordos", "cpc", "finalizadas"], ascending=False)
-    return df.rename(
-        columns={
-            "agent": "Agente",
-            "finalizadas": "Ligações atendidas",
-            "cpc": "CPC",
-            "acordos": "Acordos",
-        }
+    if "acordos_discador" not in df.columns:
+        df["acordos_discador"] = df["acordos"]
+    else:
+        df["acordos_discador"] = df["acordos_discador"].fillna(df["acordos"]).astype(int)
+    if "acordos_wpp" not in df.columns:
+        df["acordos_wpp"] = 0
+    else:
+        df["acordos_wpp"] = df["acordos_wpp"].fillna(0).astype(int)
+    df["acordos_total"] = df["acordos_discador"] + df["acordos_wpp"]
+    df["% Reversão"] = df.apply(
+        lambda r: _reversion_pct(int(r["cpc"]), int(r["acordos_discador"])),
+        axis=1,
     )
+    if show_wpp:
+        df["% Repr. WPP"] = df.apply(
+            lambda r: _wpp_share_pct(int(r["acordos_wpp"]), int(r["acordos_total"])),
+            axis=1,
+        )
+    sort_cols = ["acordos_total", "acordos_discador", "cpc", "finalizadas"]
+    df = df.sort_values(sort_cols, ascending=False)
+    rename = {
+        "agent": "Agente",
+        "finalizadas": "Ligações atendidas",
+        "cpc": "CPC",
+        "acordos_discador": "Discador",
+        "acordos_wpp": "WPP",
+        "acordos_total": "Total",
+    }
+    if not show_wpp:
+        rename["acordos_discador"] = "Acordos"
+        df = df.rename(columns=rename)
+        return df[["Agente", "Ligações atendidas", "CPC", "Acordos", "% Reversão"]]
+    return df.rename(columns=rename)[
+        [
+            "Agente",
+            "Ligações atendidas",
+            "CPC",
+            "Discador",
+            "WPP",
+            "Total",
+            "% Repr. WPP",
+            "% Reversão",
+        ]
+    ]
 
 
 def _macro_cell(value: int | float, max_val: float, fill_color: str, *, pct_scale: bool = False) -> str:
@@ -671,7 +776,7 @@ def _macro_cell(value: int | float, max_val: float, fill_color: str, *, pct_scal
     )
 
 
-def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos") -> str:
+def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos", *, show_wpp: bool = False) -> str:
     """Visão macro por agente: ligações → CPC → acordos → reversão."""
     chart = df.copy()
     if chart.empty:
@@ -679,29 +784,65 @@ def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos") -> str:
 
     max_lig = max(int(chart["Ligações atendidas"].max()), 1)
     max_cpc = max(int(chart["CPC"].max()), 1)
-    max_aco = max(int(chart["Acordos"].max()), 1)
+    acordos_col = "Total" if show_wpp else "Acordos"
+    max_aco = max(int(chart[acordos_col].max()), 1) if acordos_col in chart.columns else 1
 
     rows_html: list[str] = []
     for _, row in chart.iterrows():
         rev = row["% Reversão"]
         rev_cell = _reversion_value_cell(rev if pd.notna(rev) else None)
+        acordos_cells = ""
+        if show_wpp:
+            wpp_share = row["% Repr. WPP"]
+            acordos_cells = (
+                f'<td class="num">{_macro_cell(int(row["Discador"]), max(int(chart["Discador"].max()), 1), _BRAND["success_light"])}</td>'
+                f'<td class="num">{_macro_cell(int(row["WPP"]), max(int(chart["WPP"].max()), 1), "#D4EDDA")}</td>'
+                f'<td class="num">{_macro_cell(int(row["Total"]), max_aco, _BRAND["success"])}</td>'
+                f'<td class="num">{_wpp_share_value_cell(wpp_share if pd.notna(wpp_share) else None)}</td>'
+            )
+        else:
+            acordos_cells = (
+                f'<td class="num">{_macro_cell(int(row["Acordos"]), max_aco, _BRAND["success_light"])}</td>'
+            )
         rows_html.append(
             "<tr>"
             f'<td class="agent-name">{row["Agente"]}</td>'
             f'<td class="num">{_macro_cell(int(row["Ligações atendidas"]), max_lig, "#E8EEF8")}</td>'
             f'<td class="num">{_macro_cell(int(row["CPC"]), max_cpc, _BRAND["primary_light"])}</td>'
-            f'<td class="num">{_macro_cell(int(row["Acordos"]), max_aco, _BRAND["success_light"])}</td>'
+            f"{acordos_cells}"
             f"<td class=\"num\">{rev_cell}</td>"
             "</tr>"
         )
 
     total_lig = int(chart["Ligações atendidas"].sum())
     total_cpc = int(chart["CPC"].sum())
-    total_aco = int(chart["Acordos"].sum())
-    total_rev = _reversion_pct(total_cpc, total_aco)
+    if show_wpp:
+        total_disc = int(chart["Discador"].sum())
+        total_wpp = int(chart["WPP"].sum())
+        total_aco = int(chart["Total"].sum())
+        total_rev = _reversion_pct(total_cpc, total_disc)
+        total_wpp_share = _wpp_share_pct(total_wpp, total_aco)
+        acordos_footer = (
+            f'<td class="num">{_fmt_num(total_disc)}</td>'
+            f'<td class="num">{_fmt_num(total_wpp)}</td>'
+            f'<td class="num">{_fmt_num(total_aco)}</td>'
+            f'<td class="num">{_pct_display(total_wpp_share)}</td>'
+        )
+        acordos_header = (
+            '<th class="num">Discador</th>'
+            '<th class="num">WPP</th>'
+            '<th class="num">Total</th>'
+            '<th class="num">% Repr. WPP</th>'
+        )
+    else:
+        total_aco = int(chart["Acordos"].sum())
+        total_rev = _reversion_pct(total_cpc, total_aco)
+        acordos_footer = f'<td class="num">{_fmt_num(total_aco)}</td>'
+        acordos_header = '<th class="num">Acordos</th>'
     total_rev_cell = _reversion_footer_cell(total_rev)
 
     squad_note = f" · {squad}" if squad != "Todos" else ""
+    wpp_note = " · reversão só discador" if show_wpp else ""
     return f"""
 <div class="agent-macro-wrap">
   <table class="agent-macro-table">
@@ -710,8 +851,8 @@ def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos") -> str:
         <th>Agente{squad_note}</th>
         <th class="num">Ligações atendidas</th>
         <th class="num">CPC</th>
-        <th class="num">Acordos</th>
-        <th class="num">% Reversão</th>
+        {acordos_header}
+        <th class="num">% Reversão{wpp_note}</th>
       </tr>
     </thead>
     <tbody>
@@ -722,7 +863,7 @@ def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos") -> str:
         <td>Total da squad</td>
         <td class="num">{_fmt_num(total_lig)}</td>
         <td class="num">{_fmt_num(total_cpc)}</td>
-        <td class="num">{_fmt_num(total_aco)}</td>
+        {acordos_footer}
         <td class="num">{total_rev_cell}</td>
       </tr>
     </tfoot>
@@ -742,18 +883,26 @@ def _detail_row_key(row: dict) -> tuple[str, ...]:
 
 
 def _all_contract_details_rows(summary: dict) -> list[dict]:
-    """CPC + improdutivas em uma única lista (sem duplicar acordos/CPC)."""
+    """CPC + improdutivas + produção WPP em uma única lista."""
     merged: list[dict] = []
     seen: set[tuple[str, ...]] = set()
-    for key in ("cpc_rows", "improdutiva_rows"):
+    for key in ("cpc_rows", "improdutiva_rows", "wpp_production_rows"):
         for row in summary.get(key, []):
             if not isinstance(row, dict):
                 continue
-            dedupe_key = _detail_row_key(row)
+            item = dict(row)
+            if key == "wpp_production_rows":
+                item.setdefault("channel", "whatsapp")
+                item.setdefault("is_cpc", False)
+            elif key == "cpc_rows":
+                item.setdefault("channel", "discador")
+            else:
+                item.setdefault("channel", "discador")
+            dedupe_key = _detail_row_key(item)
             if dedupe_key in seen:
                 continue
             seen.add(dedupe_key)
-            merged.append(dict(row))
+            merged.append(item)
     merged.sort(key=lambda item: str(item.get("call_date", "")), reverse=True)
     return merged
 
@@ -766,9 +915,16 @@ def _prepare_details_df(rows: list) -> pd.DataFrame:
         df["cpc_label"] = df["is_cpc"].map(lambda value: "Sim" if bool(value) else "Não")
     else:
         df["cpc_label"] = "Não"
+    if "channel" in df.columns:
+        df["channel_label"] = df["channel"].map(
+            lambda value: "WhatsApp" if str(value).lower() == "whatsapp" else "Discador"
+        )
+    else:
+        df["channel_label"] = "Discador"
     rename = {
         "agent_name": "Agente",
         "contract_number": "Nº Contrato",
+        "channel_label": "Canal",
         "cpc_label": "CPC",
         "qualification_name": "Finalização",
         "call_date": "Data/Hora",
@@ -777,7 +933,16 @@ def _prepare_details_df(rows: list) -> pd.DataFrame:
     }
     cols = [c for c in rename if c in df.columns]
     out = df[cols].rename(columns=rename)
-    order = ["Agente", "Nº Contrato", "CPC", "Finalização", "Data/Hora", "Campanha", "Telefone"]
+    order = [
+        "Agente",
+        "Nº Contrato",
+        "Canal",
+        "CPC",
+        "Finalização",
+        "Data/Hora",
+        "Campanha",
+        "Telefone",
+    ]
     return out[[col for col in order if col in out.columns]]
 
 
@@ -860,7 +1025,7 @@ def main() -> None:
         fetch_data.clear()
 
     payload = fetch_data(refresh=refresh, mode=mode)
-    base_summary = payload["summary"]
+    base_summary = _finalize_summary(payload.get("summary"), mode)
     origin = payload["origin"]
     reload_error = payload.get("reload_error")
 
@@ -891,38 +1056,74 @@ def main() -> None:
 
     updated = summary.get("updated_at", "—")
     ref_date = summary.get("date", "—")
+    show_wpp = _show_wpp_metrics(summary, selected_squad)
 
-    rev = _reversion_pct(summary.get("total_cpc", 0), summary.get("total_production", 0))
+    rev = _reversion_pct(summary.get("total_cpc", 0), _discador_total(summary))
     rev_display = f"{rev:.1f}%".replace(".", ",") if rev is not None else "—"
 
-    m1, m2, m3, m4 = st.columns(4)
-    with m1:
-        st.markdown(
-            _kpi_card("CPC — Contato positivo", _fmt_num(summary.get("total_cpc", 0)), "cpc", ICON_CPC),
-            unsafe_allow_html=True,
-        )
-    with m2:
-        st.markdown(
-            _kpi_card("Acordos formalizados", _fmt_num(summary.get("total_production", 0)), "acordos", ICON_ACORDOS),
-            unsafe_allow_html=True,
-        )
-    with m3:
-        st.markdown(
-            _kpi_card("Reversão geral", rev_display, "reversao", ICON_REVERSAO),
-            unsafe_allow_html=True,
-        )
-    with m4:
-        st.markdown(
-            _kpi_card("Chamadas finalizadas", _fmt_num(summary.get("total_finalized", 0)), "finalizadas", ICON_FINALIZADAS),
-            unsafe_allow_html=True,
-        )
+    if show_wpp:
+        wpp_repr = _pct_display(_wpp_share_total(summary))
+        m1, m2, m3, m4, m5, m6 = st.columns(6)
+        with m1:
+            st.markdown(
+                _kpi_card("CPC — Contato positivo", _fmt_num(summary.get("total_cpc", 0)), "cpc", ICON_CPC),
+                unsafe_allow_html=True,
+            )
+        with m2:
+            st.markdown(
+                _kpi_card("Acordos discador", _fmt_num(_discador_total(summary)), "acordos", ICON_ACORDOS),
+                unsafe_allow_html=True,
+            )
+        with m3:
+            st.markdown(
+                _kpi_card("Acordos WPP", _fmt_num(_wpp_total(summary)), "acordos", ICON_ACORDOS),
+                unsafe_allow_html=True,
+            )
+        with m4:
+            st.markdown(
+                _kpi_card("Total acordos", _fmt_num(summary.get("total_production", 0)), "acordos", ICON_ACORDOS),
+                unsafe_allow_html=True,
+            )
+        with m5:
+            st.markdown(
+                _kpi_card("Repr. WPP geral", wpp_repr, "acordos", ICON_ACORDOS),
+                unsafe_allow_html=True,
+            )
+        with m6:
+            st.markdown(
+                _kpi_card("Reversão (discador)", rev_display, "reversao", ICON_REVERSAO),
+                unsafe_allow_html=True,
+            )
+    else:
+        m1, m2, m3, m4 = st.columns(4)
+        with m1:
+            st.markdown(
+                _kpi_card("CPC — Contato positivo", _fmt_num(summary.get("total_cpc", 0)), "cpc", ICON_CPC),
+                unsafe_allow_html=True,
+            )
+        with m2:
+            st.markdown(
+                _kpi_card("Acordos formalizados", _fmt_num(_discador_total(summary)), "acordos", ICON_ACORDOS),
+                unsafe_allow_html=True,
+            )
+        with m3:
+            st.markdown(
+                _kpi_card("Reversão geral", rev_display, "reversao", ICON_REVERSAO),
+                unsafe_allow_html=True,
+            )
+        with m4:
+            st.markdown(
+                _kpi_card("Chamadas finalizadas", _fmt_num(summary.get("total_finalized", 0)), "finalizadas", ICON_FINALIZADAS),
+                unsafe_allow_html=True,
+            )
 
     st.caption(
         f"Fonte: {origin} · Atualizado: {updated} · Referência: {ref_date}"
         + (f" · Squad: {selected_squad}" if selected_squad != "Todos" else "")
+        + (" · WPP: Early Stage" if show_wpp else "")
     )
 
-    df = _agents_df(summary)
+    df = _agents_df(summary, show_wpp=show_wpp)
     if df.empty:
         st.warning(
             "Sem dados para esta squad no dia. Tente «Todos» ou exporte o CSV do 3C Plus e rode run.py."
@@ -935,12 +1136,18 @@ def main() -> None:
 
     with tab1:
         st.subheader("Produção por agente")
-        st.caption("Funil operacional · ligações atendidas → CPC → acordos → % reversão")
-        st.markdown(_agent_macro_table_html(df, selected_squad), unsafe_allow_html=True)
+        caption = "Funil operacional · ligações atendidas → CPC → acordos → % reversão"
+        if show_wpp:
+            caption += (
+                " · % Repr. WPP = participação do WhatsApp nos acordos totais do agente"
+                " · reversão calculada só no discador"
+            )
+        st.caption(caption)
+        st.markdown(_agent_macro_table_html(df, selected_squad, show_wpp=show_wpp), unsafe_allow_html=True)
 
         c1, c2 = st.columns([1, 1])
         with c1:
-            share = _share_chart(df, selected_squad)
+            share = _share_chart(df, selected_squad, show_wpp=show_wpp)
             if len(share.data) > 0:
                 st.plotly_chart(share, use_container_width=True, theme=None)
             else:
