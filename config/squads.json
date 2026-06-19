@@ -5,8 +5,8 @@
       "label": "Todos"
     },
     {
-      "id": "over90_ir",
-      "label": "Over 90 + IR",
+      "id": "irpf",
+      "label": "IRPF",
       "agents": [
         "Ricardo Henrique Xavier Martins",
         "Anderson Lopes"
@@ -15,7 +15,7 @@
     {
       "id": "early_stage",
       "label": "Early Stage",
-      "exclude_squad": "over90_ir"
+      "exclude_squad": "irpf"
     }
   ]
 }

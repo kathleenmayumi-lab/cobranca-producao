@@ -582,8 +582,11 @@ def _wpp_share_total(summary: dict) -> float | None:
     return _wpp_share_pct(_wpp_total(summary), int(summary.get("total_production", 0)))
 
 
+_WPP_SQUADS = frozenset({"Early Stage", "IRPF"})
+
+
 def _show_wpp_metrics(summary: dict, squad: str) -> bool:
-    return squad == "Early Stage" or _wpp_total(summary) > 0
+    return squad in _WPP_SQUADS or _wpp_total(summary) > 0
 
 
 def _upload_snapshot(summary: dict) -> str | None:
@@ -746,8 +749,8 @@ def fetch_data(refresh: bool, mode: str) -> dict:
 
 
 def _squad_banner_class(squad: str) -> str:
-    if squad == "Over 90 + IR":
-        return "over90"
+    if squad == "IRPF":
+        return "irpf"
     if squad == "Early Stage":
         return "early"
     return "todos"
@@ -1189,7 +1192,7 @@ def main() -> None:
     st.caption(
         f"Fonte: {origin} · Atualizado: {updated} · Referência: {ref_date}"
         + (f" · Squad: {selected_squad}" if selected_squad != "Todos" else "")
-        + (" · WPP: Early Stage" if show_wpp else "")
+        + (" · com produção WPP" if show_wpp else "")
     )
 
     df = _agents_df(summary, show_wpp=show_wpp)

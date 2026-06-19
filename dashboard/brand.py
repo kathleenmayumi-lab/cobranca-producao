@@ -197,7 +197,7 @@ def css() -> str:
         border: 1px solid {c['border']};
         color: {c['text_muted']};
     }}
-    .squad-banner.over90 {{
+    .squad-banner.irpf {{
         background: {c['primary_light']};
         border: 1px solid #B8C8FF;
         color: {c['primary_dark']};
