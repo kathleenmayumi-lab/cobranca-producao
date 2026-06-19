@@ -283,7 +283,7 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
     agents_full = chart["Agente"].tolist()
     agents = [_short_agent_label(name) for name in agents_full]
     cpcs = chart["CPC"].astype(int).tolist()
-    acordos_col = "Discador" if "Discador" in chart.columns else "Acordos"
+    acordos_col = "Acordos discador" if "Acordos discador" in chart.columns else "Acordos"
     acordos = chart[acordos_col].astype(int).tolist()
     xmax = min(110.0, max(max(values) * 1.15 + 12, 88.0))
 
@@ -334,6 +334,75 @@ def _reversion_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
         range=[0, xmax],
         title=dict(
             text="Reversão sobre CPC (%)",
+            font=dict(color=_CHART_TEXT, size=11),
+            standoff=20,
+        ),
+        tickfont=dict(color=_CHART_TEXT, size=11),
+        gridcolor="#E8EEF8",
+        zeroline=False,
+        dtick=20,
+    )
+    layout["yaxis"] = dict(
+        automargin=True,
+        tickfont=dict(color=_CHART_TEXT, size=12),
+        tickmode="array",
+        tickvals=agents,
+        ticktext=agents,
+    )
+    layout["showlegend"] = False
+    layout["annotations"] = []
+    fig.update_layout(**layout)
+    return _finalize_chart(fig)
+
+
+def _wpp_repr_chart(df: pd.DataFrame, squad: str = "Todos") -> go.Figure:
+    """Barras horizontais — % dos acordos totais via WhatsApp por agente."""
+    if "% Repr. WPP" not in df.columns or "Total" not in df.columns:
+        return go.Figure()
+
+    chart = df[df["Total"] > 0].copy()
+    chart = chart.dropna(subset=["% Repr. WPP"]).sort_values("% Repr. WPP", ascending=True).tail(10)
+    if chart.empty:
+        return go.Figure()
+
+    values = chart["% Repr. WPP"].astype(float).tolist()
+    agents_full = chart["Agente"].tolist()
+    agents = [_short_agent_label(name) for name in agents_full]
+    wpp_counts = chart["Acordos WPP"].astype(int).tolist()
+    totals = chart["Total"].astype(int).tolist()
+    xmax = min(100.0, max(max(values) * 1.2 + 10, 35.0))
+
+    bar_colors = ["#25A55F" if value > 0 else "#D8E8DC" for value in values]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=values,
+            y=agents,
+            orientation="h",
+            marker=dict(color=bar_colors, cornerradius=8, line=dict(width=0)),
+            text=[f"{value:.1f}%".replace(".", ",") for value in values],
+            textposition="outside",
+            textfont=dict(color=_CHART_TEXT, size=12),
+            cliponaxis=False,
+            customdata=list(zip(agents_full, wpp_counts, totals, values)),
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br>"
+                "Repr. WPP: %{customdata[3]:.1f}%<br>"
+                "WPP: %{customdata[1]} · Total: %{customdata[2]}<extra></extra>"
+            ),
+        )
+    )
+
+    repr_title = "Representatividade WPP"
+    if squad != "Todos":
+        repr_title = f"{repr_title} · {squad}"
+    layout = _chart_theme(repr_title, height=440)
+    layout["margin"] = dict(l=4, r=64, t=48, b=52)
+    layout["xaxis"] = dict(
+        range=[0, xmax],
+        title=dict(
+            text="% dos acordos via WhatsApp",
             font=dict(color=_CHART_TEXT, size=11),
             standoff=20,
         ),
@@ -741,8 +810,8 @@ def _agents_df(summary: dict, *, show_wpp: bool = False) -> pd.DataFrame:
         "agent": "Agente",
         "finalizadas": "Ligações atendidas",
         "cpc": "CPC",
-        "acordos_discador": "Discador",
-        "acordos_wpp": "WPP",
+        "acordos_discador": "Acordos discador",
+        "acordos_wpp": "Acordos WPP",
         "acordos_total": "Total",
     }
     if not show_wpp:
@@ -754,8 +823,8 @@ def _agents_df(summary: dict, *, show_wpp: bool = False) -> pd.DataFrame:
             "Agente",
             "Ligações atendidas",
             "CPC",
-            "Discador",
-            "WPP",
+            "Acordos discador",
+            "Acordos WPP",
             "Total",
             "% Repr. WPP",
             "% Reversão",
@@ -795,8 +864,8 @@ def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos", *, show_wpp:
         if show_wpp:
             wpp_share = row["% Repr. WPP"]
             acordos_cells = (
-                f'<td class="num">{_macro_cell(int(row["Discador"]), max(int(chart["Discador"].max()), 1), _BRAND["success_light"])}</td>'
-                f'<td class="num">{_macro_cell(int(row["WPP"]), max(int(chart["WPP"].max()), 1), "#D4EDDA")}</td>'
+                f'<td class="num">{_macro_cell(int(row["Acordos discador"]), max(int(chart["Acordos discador"].max()), 1), _BRAND["success_light"])}</td>'
+                f'<td class="num">{_macro_cell(int(row["Acordos WPP"]), max(int(chart["Acordos WPP"].max()), 1), "#D4EDDA")}</td>'
                 f'<td class="num">{_macro_cell(int(row["Total"]), max_aco, _BRAND["success"])}</td>'
                 f'<td class="num">{_wpp_share_value_cell(wpp_share if pd.notna(wpp_share) else None)}</td>'
             )
@@ -817,8 +886,8 @@ def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos", *, show_wpp:
     total_lig = int(chart["Ligações atendidas"].sum())
     total_cpc = int(chart["CPC"].sum())
     if show_wpp:
-        total_disc = int(chart["Discador"].sum())
-        total_wpp = int(chart["WPP"].sum())
+        total_disc = int(chart["Acordos discador"].sum())
+        total_wpp = int(chart["Acordos WPP"].sum())
         total_aco = int(chart["Total"].sum())
         total_rev = _reversion_pct(total_cpc, total_disc)
         total_wpp_share = _wpp_share_pct(total_wpp, total_aco)
@@ -829,8 +898,8 @@ def _agent_macro_table_html(df: pd.DataFrame, squad: str = "Todos", *, show_wpp:
             f'<td class="num">{_pct_display(total_wpp_share)}</td>'
         )
         acordos_header = (
-            '<th class="num">Discador</th>'
-            '<th class="num">WPP</th>'
+            '<th class="num">Acordos discador</th>'
+            '<th class="num">Acordos WPP</th>'
             '<th class="num">Total</th>'
             '<th class="num">% Repr. WPP</th>'
         )
@@ -1145,7 +1214,11 @@ def main() -> None:
         st.caption(caption)
         st.markdown(_agent_macro_table_html(df, selected_squad, show_wpp=show_wpp), unsafe_allow_html=True)
 
-        c1, c2 = st.columns([1, 1])
+        if show_wpp:
+            c1, c2, c3 = st.columns(3)
+        else:
+            c1, c2 = st.columns(2)
+            c3 = None
         with c1:
             share = _share_chart(df, selected_squad, show_wpp=show_wpp)
             if len(share.data) > 0:
@@ -1159,6 +1232,14 @@ def main() -> None:
                 st.plotly_chart(rev_chart, use_container_width=True, theme=None)
             else:
                 st.caption("Sem dados de reversão por agente.")
+        if c3 is not None:
+            with c3:
+                st.caption("% dos acordos totais fechados via WhatsApp · verde = com produção WPP")
+                wpp_chart = _wpp_repr_chart(df, selected_squad)
+                if len(wpp_chart.data) > 0:
+                    st.plotly_chart(wpp_chart, use_container_width=True, theme=None)
+                else:
+                    st.caption("Sem dados de representatividade WPP.")
 
     with tab2:
         _show_breakdown_by_type(
