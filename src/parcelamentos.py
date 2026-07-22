@@ -27,6 +27,49 @@ STATUS_CANCELADO = "cancelado"
 TIPO_ENTRADA = "entrada"
 TIPO_PARCELA = "parcela"
 
+ALERTA_EM_DIA = "em_dia"
+ALERTA_EM_ATRASO = "em_atraso"
+ALERTA_A_VENCER = "a_vencer"
+ALERTA_CANCELADO = "cancelado"
+
+ALERTA_LABELS = {
+    ALERTA_EM_DIA: "Em dia",
+    ALERTA_EM_ATRASO: "Em atraso",
+    ALERTA_A_VENCER: "A vencer",
+    ALERTA_CANCELADO: "Cancelado",
+}
+
+
+def add_months(d: date, months: int, *, day: int | None = None) -> date:
+    """Soma meses civis; `day` fixo (ex.: todo dia 22)."""
+    import calendar
+
+    target_day = int(day) if day is not None else d.day
+    m0 = d.month - 1 + months
+    year = d.year + m0 // 12
+    month = m0 % 12 + 1
+    last = calendar.monthrange(year, month)[1]
+    return date(year, month, min(max(1, target_day), last))
+
+
+def vencimentos_mensais(
+    *,
+    ancora: date,
+    dia_vencimento: int,
+    n_parcelas: int,
+    primeiro_apos_meses: int = 1,
+) -> list[date]:
+    """
+    Gera N vencimentos no mesmo dia do mês (ex.: todo dia 22).
+    Por padrão a 1ª parcela é 1 mês após a âncora (formalização/entrada).
+    """
+    if n_parcelas < 1:
+        return []
+    dia = max(1, min(int(dia_vencimento), 31))
+    primeira = add_months(ancora, primeiro_apos_meses, day=dia)
+    return [add_months(primeira, i, day=dia) for i in range(n_parcelas)]
+
+
 ACORDOS_HEADERS = [
     "acordo_id",
     "created_at",
@@ -169,14 +212,28 @@ def validar_cpf(value: Any) -> str:
     return formatar_cpf(digits)
 
 
-def list_agents() -> list[str]:
+def list_agents(*, squads: list[str] | None = None) -> list[str]:
+    """Lista agentes. Por padrão só squads de parcelamentos (Over 90 / IRPF)."""
     if not WPP_CONFIG_PATH.exists():
         return []
+    allowed = squads
+    if allowed is None:
+        cfg_squads = load_config().get("squads")
+        if isinstance(cfg_squads, list) and cfg_squads:
+            allowed = [str(s).strip() for s in cfg_squads if str(s).strip()]
+    allowed_cf = {s.casefold() for s in (allowed or [])}
+
     data = json.loads(WPP_CONFIG_PATH.read_text(encoding="utf-8"))
     names: list[str] = []
     for item in data.get("agents", []):
         name = str(item.get("agent") or "").strip()
-        if name and name not in names:
+        if not name:
+            continue
+        if allowed_cf:
+            squad = str(item.get("squad") or "").strip()
+            if squad.casefold() not in allowed_cf:
+                continue
+        if name not in names:
             names.append(name)
     return names
 
@@ -397,13 +454,23 @@ def criar_acordo(
     if any(v is None for v in vencimentos_parcelas):
         raise ValueError("Todos os vencimentos das parcelas são obrigatórios")
 
-    soma_parcelas = sum(valores, start=Decimal("0.00"))
+    # Demais parcelas iguais: com total = entrada + n×valor, a soma fecha exatamente.
     esperado = _money(total - entrada)
-    if abs(soma_parcelas - esperado) > Decimal("0.05"):
-        raise ValueError(
-            f"Soma das parcelas ({_fmt_money(soma_parcelas)}) deve fechar o restante "
-            f"após a entrada ({_fmt_money(esperado)})"
-        )
+    base = valores[0]
+    if any(v != base for v in valores):
+        soma_parcelas = sum(valores, start=Decimal("0.00"))
+        if abs(soma_parcelas - esperado) > Decimal("0.05"):
+            raise ValueError(
+                f"Soma das parcelas ({_fmt_money(soma_parcelas)}) deve fechar o restante "
+                f"após a entrada ({_fmt_money(esperado)})"
+            )
+    else:
+        if abs(_money(base * n) - esperado) > Decimal("0.05"):
+            raise ValueError(
+                f"{n}x de {_fmt_money(base)} = {_fmt_money(base * n)}, "
+                f"mas o restante é {_fmt_money(esperado)}."
+            )
+        valores = [base] * n
 
     if pct_entrada is None:
         pct = _money(entrada * Decimal("100") / total) if total else Decimal("0")
@@ -611,3 +678,276 @@ def marcar_pago(parcela_id: str, pago_em: date | None = None) -> dict[str, Any]:
 
 def marcar_pendente(parcela_id: str) -> dict[str, Any]:
     return _update_parcela_status(parcela_id, STATUS_PENDENTE, pago_em="")
+
+
+def marcar_parcela_cancelada(parcela_id: str) -> dict[str, Any]:
+    return _update_parcela_status(parcela_id, STATUS_CANCELADO, pago_em="")
+
+
+def alerta_acordo(
+    parcelas: list[dict[str, Any]],
+    status_acordo: str = "",
+    today: date | None = None,
+) -> str:
+    """
+    - cancelado
+    - em_atraso: vencimento passado sem pagamento
+    - em_dia: parcela do mês paga e sem atraso
+    - a_vencer: anteriores pagas e parcela do mês ainda a vencer
+    """
+    today = today or date.today()
+    st_ac = (status_acordo or "").strip().casefold()
+    if st_ac in {"cancelado", "cancelada", "quebra"}:
+        return ALERTA_CANCELADO
+    if not parcelas:
+        return ALERTA_EM_DIA
+    if all(str(p.get("status_efetivo", p.get("status", ""))).casefold() == STATUS_CANCELADO for p in parcelas):
+        return ALERTA_CANCELADO
+
+    ativos = [
+        p
+        for p in parcelas
+        if str(p.get("status_efetivo", p.get("status", ""))).casefold() != STATUS_CANCELADO
+    ]
+    if not ativos:
+        return ALERTA_CANCELADO
+
+    if any(str(p.get("status_efetivo", "")).casefold() == "atrasado" for p in ativos):
+        return ALERTA_EM_ATRASO
+
+    do_mes = [
+        p
+        for p in ativos
+        if p.get("vencimento_date")
+        and p["vencimento_date"].month == today.month
+        and p["vencimento_date"].year == today.year
+    ]
+    anteriores = [
+        p
+        for p in ativos
+        if p.get("vencimento_date")
+        and (
+            p["vencimento_date"].year < today.year
+            or (p["vencimento_date"].year == today.year and p["vencimento_date"].month < today.month)
+        )
+    ]
+    anteriores_ok = (not anteriores) or all(
+        str(p.get("status_efetivo", "")).casefold() == STATUS_PAGO for p in anteriores
+    )
+
+    if do_mes:
+        if all(str(p.get("status_efetivo", "")).casefold() == STATUS_PAGO for p in do_mes) and anteriores_ok:
+            return ALERTA_EM_DIA
+        if anteriores_ok:
+            return ALERTA_A_VENCER
+        return ALERTA_A_VENCER
+
+    futuras = [
+        p
+        for p in ativos
+        if p.get("vencimento_date")
+        and p["vencimento_date"] > today
+        and str(p.get("status_efetivo", "")).casefold() != STATUS_PAGO
+    ]
+    if anteriores_ok and futuras:
+        return ALERTA_A_VENCER
+    if all(str(p.get("status_efetivo", "")).casefold() == STATUS_PAGO for p in ativos):
+        return ALERTA_EM_DIA
+    return ALERTA_A_VENCER
+
+
+def resumo_acordos(*, agente: str | None = None, today: date | None = None) -> list[dict[str, Any]]:
+    """Um card/linha por acordo, com alerta (em dia / atraso / a vencer / cancelado)."""
+    today = today or date.today()
+    acordos = {str(a.get("acordo_id", "")).strip(): a for a in load_acordos() if str(a.get("acordo_id", "")).strip()}
+    parcelas = [enrich_parcela(r, today=today) for r in load_parcelas()]
+    by_acordo: dict[str, list[dict[str, Any]]] = {}
+    for p in parcelas:
+        aid = str(p.get("acordo_id", "")).strip()
+        if not aid:
+            continue
+        if agente and _clean_cell(p.get("agente")).casefold() != agente.casefold():
+            continue
+        by_acordo.setdefault(aid, []).append(p)
+
+    rows: list[dict[str, Any]] = []
+    for aid, plist in by_acordo.items():
+        meta = acordos.get(aid, {})
+        alerta = alerta_acordo(plist, status_acordo=str(meta.get("status_acordo", "")), today=today)
+        abertas = [p for p in plist if p.get("status_efetivo") not in {STATUS_PAGO, STATUS_CANCELADO}]
+        atrasadas = [p for p in plist if p.get("status_efetivo") == "atrasado"]
+        sample = plist[0]
+        rows.append(
+            {
+                "acordo_id": aid,
+                "alerta": alerta,
+                "alerta_label": ALERTA_LABELS.get(alerta, alerta),
+                "ccb": sample.get("ccb") or meta.get("ccb", ""),
+                "cpf": sample.get("cpf") or meta.get("cpf", ""),
+                "produto": sample.get("produto") or meta.get("produto", ""),
+                "agente": sample.get("agente") or meta.get("agente", ""),
+                "formalizacao": sample.get("formalizacao") or meta.get("formalizacao", ""),
+                "valor_total": meta.get("valor_total", ""),
+                "n_parcelas": meta.get("n_parcelas", ""),
+                "parcelas_abertas": len(abertas),
+                "parcelas_atrasadas": len(atrasadas),
+                "parcelas_total": len(plist),
+                "status_acordo": meta.get("status_acordo", ""),
+            }
+        )
+
+    order = {
+        ALERTA_EM_ATRASO: 0,
+        ALERTA_A_VENCER: 1,
+        ALERTA_EM_DIA: 2,
+        ALERTA_CANCELADO: 3,
+    }
+    rows.sort(key=lambda r: (order.get(r["alerta"], 9), r.get("ccb") or ""))
+    return rows
+
+
+def _update_acordo_status(acordo_id: str, status_acordo: str) -> None:
+    acordo_id = _clean_cell(acordo_id)
+    if not acordo_id:
+        raise ValueError("acordo_id inválido")
+    if not spreadsheet_configured():
+        store = _load_local()
+        for row in store.get("acordos", []):
+            if _clean_cell(row.get("acordo_id")) == acordo_id:
+                row["status_acordo"] = status_acordo
+                _save_local(store)
+                return
+        raise ValueError(f"Acordo {acordo_id} não encontrado")
+
+    config = load_config()
+    spreadsheet = _api_retry(lambda: _client().open_by_key(str(config["spreadsheet_id"]).strip()))
+    ws = _ensure_worksheet(spreadsheet, str(config.get("acordos_worksheet") or "Acordos"), ACORDOS_HEADERS)
+    values = _api_retry(ws.get_all_values)
+    if not values:
+        raise ValueError("Aba Acordos vazia")
+    head = [h.strip() for h in values[0]]
+    idx_id = head.index("acordo_id")
+    idx_st = head.index("status_acordo")
+    for row_num, raw in enumerate(values[1:], start=2):
+        if idx_id < len(raw) and _clean_cell(raw[idx_id]) == acordo_id:
+            _api_retry(lambda: ws.update_cell(row_num, idx_st + 1, status_acordo))
+            return
+    raise ValueError(f"Acordo {acordo_id} não encontrado")
+
+
+def cancelar_acordo(acordo_id: str) -> dict[str, Any]:
+    """Mantém no histórico: status_acordo=cancelado e parcelas abertas → cancelado."""
+    acordo_id = _clean_cell(acordo_id)
+    _update_acordo_status(acordo_id, STATUS_CANCELADO)
+    canceladas = 0
+    for p in load_parcelas():
+        if _clean_cell(p.get("acordo_id")) != acordo_id:
+            continue
+        st = str(p.get("status", "")).strip().lower()
+        if st in {STATUS_PAGO, STATUS_CANCELADO}:
+            continue
+        marcar_parcela_cancelada(str(p.get("parcela_id", "")))
+        canceladas += 1
+    return {"acordo_id": acordo_id, "parcelas_canceladas": canceladas}
+
+
+def cancelar_acordos_por_ccbs(ccbs: list[str]) -> dict[str, Any]:
+    """Cancela acordos por CCB em lote (evita estourar cota da API Sheets)."""
+    wanted = {_clean_cell(c) for c in ccbs if _clean_cell(c)}
+    if not wanted:
+        return {"cancelados": [], "ccbs_nao_encontrados": [], "parcelas_atualizadas": 0}
+
+    if not spreadsheet_configured():
+        store = _load_local()
+        done: list[str] = []
+        missing: list[str] = []
+        found_ccbs: set[str] = set()
+        for a in store.get("acordos", []):
+            ccb = _clean_cell(a.get("ccb"))
+            if ccb in wanted:
+                a["status_acordo"] = STATUS_CANCELADO
+                done.append(_clean_cell(a.get("acordo_id")))
+                found_ccbs.add(ccb)
+        aids = set(done)
+        n_parc = 0
+        for p in store.get("parcelas", []):
+            if _clean_cell(p.get("acordo_id")) not in aids:
+                continue
+            st = str(p.get("status", "")).strip().lower()
+            if st in {STATUS_PAGO, STATUS_CANCELADO}:
+                continue
+            p["status"] = STATUS_CANCELADO
+            p["pago_em"] = ""
+            n_parc += 1
+        _save_local(store)
+        missing = sorted(wanted - found_ccbs)
+        return {"cancelados": done, "ccbs_nao_encontrados": missing, "parcelas_atualizadas": n_parc}
+
+    config = load_config()
+    spreadsheet = _api_retry(lambda: _client().open_by_key(str(config["spreadsheet_id"]).strip()))
+    ws_a = _ensure_worksheet(spreadsheet, str(config.get("acordos_worksheet") or "Acordos"), ACORDOS_HEADERS)
+    ws_p = _ensure_worksheet(spreadsheet, str(config.get("parcelas_worksheet") or "Parcelas"), PARCELAS_HEADERS)
+
+    vals_a = _api_retry(ws_a.get_all_values)
+    vals_p = _api_retry(ws_p.get_all_values)
+    if not vals_a or not vals_p:
+        raise ValueError("Abas Acordos/Parcelas vazias")
+
+    head_a = [h.strip() for h in vals_a[0]]
+    head_p = [h.strip() for h in vals_p[0]]
+    idx_aid = head_a.index("acordo_id")
+    idx_ccb_a = head_a.index("ccb")
+    idx_st_a = head_a.index("status_acordo")
+    idx_pid = head_p.index("parcela_id")
+    idx_aid_p = head_p.index("acordo_id")
+    idx_st_p = head_p.index("status")
+    idx_pago = head_p.index("pago_em")
+
+    done: list[str] = []
+    found_ccbs: set[str] = set()
+    acordo_updates: list[dict[str, Any]] = []
+    for row_num, raw in enumerate(vals_a[1:], start=2):
+        ccb = _clean_cell(raw[idx_ccb_a] if idx_ccb_a < len(raw) else "")
+        aid = _clean_cell(raw[idx_aid] if idx_aid < len(raw) else "")
+        if ccb not in wanted or not aid:
+            continue
+        found_ccbs.add(ccb)
+        done.append(aid)
+        acordo_updates.append(
+            {"range": f"{gspread.utils.rowcol_to_a1(row_num, idx_st_a + 1)}", "values": [[STATUS_CANCELADO]]}
+        )
+
+    aids = set(done)
+    parcela_updates: list[dict[str, Any]] = []
+    n_parc = 0
+    for row_num, raw in enumerate(vals_p[1:], start=2):
+        aid = _clean_cell(raw[idx_aid_p] if idx_aid_p < len(raw) else "")
+        if aid not in aids:
+            continue
+        st = _clean_cell(raw[idx_st_p] if idx_st_p < len(raw) else "").lower()
+        if st in {STATUS_PAGO, STATUS_CANCELADO}:
+            continue
+        parcela_updates.append(
+            {"range": f"{gspread.utils.rowcol_to_a1(row_num, idx_st_p + 1)}", "values": [[STATUS_CANCELADO]]}
+        )
+        parcela_updates.append(
+            {"range": f"{gspread.utils.rowcol_to_a1(row_num, idx_pago + 1)}", "values": [[""]]}
+        )
+        n_parc += 1
+
+    # batch update em pedaços
+    def _flush(ws: gspread.Worksheet, updates: list[dict[str, Any]]) -> None:
+        for i in range(0, len(updates), 80):
+            chunk = updates[i : i + 80]
+            _api_retry(lambda c=chunk: ws.batch_update(c, value_input_option="USER_ENTERED"))
+
+    if acordo_updates:
+        _flush(ws_a, acordo_updates)
+    if parcela_updates:
+        _flush(ws_p, parcela_updates)
+
+    return {
+        "cancelados": done,
+        "ccbs_nao_encontrados": sorted(wanted - found_ccbs),
+        "parcelas_atualizadas": n_parc,
+    }

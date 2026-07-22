@@ -1,9 +1,10 @@
 {
-  "spreadsheet_id": "",
+  "spreadsheet_id": "11Lhgs1BNlvvoZ37dri9i3dl7EUDTSjYLYtFM_nahLcM",
   "acordos_worksheet": "Acordos",
   "parcelas_worksheet": "Parcelas",
   "entrada_pct_padrao": 30,
   "max_parcelas": 5,
   "titulo_planilha": "Controle Parcelamentos — Cobrança",
-  "produtos": ["Early Stage", "Over 90", "IRPF", "Outro"]
+  "squads": ["Over 90", "IRPF"],
+  "produtos": ["Over 90", "IR"]
 }
