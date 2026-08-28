@@ -1,0 +1,13 @@
+---
+description: Todo quadro/tabela para o usuário termina com uma linha Total
+alwaysApply: true
+---
+
+# Linha Total em quadro
+
+Sempre que mandar um **quadro** (tabela no chat ou canvas): última linha = **Total**.
+
+- Somar o que é quantidade (acordos, discagens, CPC, telefones).
+- % do total: recalcular no agregado (não média das % de linha, salvo se a conta for essa).
+- Projeção (6ª/7ª) entra no total só se o quadro for o cenário projetado; senão o total é só o observado e o incremento vai à parte.
+- Nome da linha: `Total`.
