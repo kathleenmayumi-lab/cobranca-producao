@@ -1,0 +1,96 @@
+{
+  "id": "tentativas_agosto_14du",
+  "periodo": "2026-08-03/2026-08-20",
+  "dias_uteis": 14,
+  "excluido": "2026-08-21 (dia em curso)",
+  "fonte": "data/history/calls_slim",
+  "metodo": "Tentativa = ordem da ligacao no mesmo telefone no mesmo dia, ordenada por call_date. Reversao = acordo discador / CPC negociavel (Acordo formalizado + Nao revertido + Sem interesse).",
+  "producao_discador_dia": 232.1,
+  "queda_projecao": 0.671,
+  "linhas": [
+    {
+      "tentativa": 1,
+      "status": "observado",
+      "discagens_dia": 43718,
+      "cpc_dia": 161.1,
+      "cpc_negociavel_dia": 110.9,
+      "acordos_dia": 85.07,
+      "cpc_sobre_discagem_pct": 0.37,
+      "reversao_pct": 76.7,
+      "pct_producao_atual": 36.6
+    },
+    {
+      "tentativa": 2,
+      "status": "observado",
+      "discagens_dia": 27413,
+      "cpc_dia": 105.7,
+      "cpc_negociavel_dia": 70.7,
+      "acordos_dia": 56.86,
+      "cpc_sobre_discagem_pct": 0.39,
+      "reversao_pct": 80.4,
+      "pct_producao_atual": 24.5
+    },
+    {
+      "tentativa": 3,
+      "status": "observado",
+      "discagens_dia": 19794,
+      "cpc_dia": 71.4,
+      "cpc_negociavel_dia": 48.7,
+      "acordos_dia": 40.14,
+      "cpc_sobre_discagem_pct": 0.36,
+      "reversao_pct": 82.4,
+      "pct_producao_atual": 17.3
+    },
+    {
+      "tentativa": 4,
+      "status": "observado",
+      "discagens_dia": 12545,
+      "cpc_dia": 50.8,
+      "cpc_negociavel_dia": 35.8,
+      "acordos_dia": 28.5,
+      "cpc_sobre_discagem_pct": 0.4,
+      "reversao_pct": 79.6,
+      "pct_producao_atual": 12.3
+    },
+    {
+      "tentativa": 5,
+      "status": "observado",
+      "discagens_dia": 8082,
+      "cpc_dia": 30.3,
+      "cpc_negociavel_dia": 20.9,
+      "acordos_dia": 17.21,
+      "cpc_sobre_discagem_pct": 0.37,
+      "reversao_pct": 82.3,
+      "pct_producao_atual": 7.4
+    },
+    {
+      "tentativa": 6,
+      "status": "projetado",
+      "discagens_dia": 5300,
+      "cpc_dia": 19.9,
+      "cpc_negociavel_dia": 13.8,
+      "acordos_dia": 11.55,
+      "cpc_sobre_discagem_pct": 0.38,
+      "reversao_pct": 83.7,
+      "pct_producao_atual": 5.0
+    },
+    {
+      "tentativa": 7,
+      "status": "projetado",
+      "discagens_dia": 3475,
+      "cpc_dia": 13.1,
+      "cpc_negociavel_dia": 9.1,
+      "acordos_dia": 7.74,
+      "cpc_sobre_discagem_pct": 0.38,
+      "reversao_pct": 85.2,
+      "pct_producao_atual": 3.3
+    }
+  ],
+  "incremento_6_e_7": {
+    "acordos_dia": 19.29,
+    "pct_producao_atual": 8.3,
+    "pct_do_total_novo_249": 7.7,
+    "ja_vaza_hoje_acordos_dia": 2.5
+  },
+  "nota": "36,6% na 1a tentativa (discador) considerado excelente pela operacao. WhatsApp fora desta base."
+}

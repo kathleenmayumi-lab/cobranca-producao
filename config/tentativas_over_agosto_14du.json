@@ -1,0 +1,28 @@
+{
+  "id": "tentativas_over_agosto_14du",
+  "arquivo_final": true,
+  "periodo": "2026-08-03/2026-08-20",
+  "dias_uteis": 14,
+  "universo": "Campanha Over 90 + listas 91-120, 121-180, >180, STARS Over.",
+  "metodo": "Igual Early: tentativa = mesmo telefone, mesmo dia, ordenado por call_date. Reversao = acordo discador / CPC negociavel (Acordo formalizado + Nao revertido + Sem interesse).",
+  "producao_over_discador_dia": 13.14,
+  "producao_loja_discador_dia": 232.1,
+  "canvas": "canvases/cpc-acordo-reversao-tentativa-over.canvas.tsx",
+  "linhas": [
+    {"tentativa": 1, "status": "observado", "discagens_dia": 16433.6, "cpc_dia": 30.2, "cpc_negociavel_dia": 19.7, "acordos_dia": 10.79, "cpc_sobre_discagem_pct": 0.184, "reversao_pct": 54.7, "pct_producao_over": 82.1},
+    {"tentativa": 2, "status": "observado", "discagens_dia": 2872.0, "cpc_dia": 3.7, "cpc_negociavel_dia": 2.4, "acordos_dia": 1.21, "cpc_sobre_discagem_pct": 0.129, "reversao_pct": 51.5, "pct_producao_over": 9.2},
+    {"tentativa": 3, "status": "observado", "discagens_dia": 1364.0, "cpc_dia": 1.9, "cpc_negociavel_dia": 1.2, "acordos_dia": 0.57, "cpc_sobre_discagem_pct": 0.136, "reversao_pct": 47.1, "pct_producao_over": 4.3},
+    {"tentativa": 4, "status": "observado", "discagens_dia": 998.2, "cpc_dia": 0.8, "cpc_negociavel_dia": 0.5, "acordos_dia": 0.36, "cpc_sobre_discagem_pct": 0.079, "reversao_pct": 71.4, "pct_producao_over": 2.7},
+    {"tentativa": 5, "status": "observado", "discagens_dia": 709.1, "cpc_dia": 1.1, "cpc_negociavel_dia": 0.7, "acordos_dia": 0.21, "cpc_sobre_discagem_pct": 0.151, "reversao_pct": 30.0, "pct_producao_over": 1.6}
+  ],
+  "total_1_a_5": {
+    "discagens_dia": 22376.9,
+    "cpc_dia": 37.7,
+    "cpc_negociavel_dia": 24.5,
+    "acordos_dia": 13.14,
+    "cpc_sobre_discagem_pct": 0.168,
+    "reversao_pct": 53.6
+  },
+  "leitura": "82% dos acordos Over estao na 1a (Early 37%). CPC/discagem 0,18% vs 0,37% Early. Reversao 55% vs 77%. 3a-5a quase so STARS; 91-180 zera na 3a.",
+  "nota": "3a-5a com n pequeno de CPC negociavel (1,2 / 0,5 / 0,7 por dia): reversao oscila. WhatsApp fora."
+}

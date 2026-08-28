@@ -1,0 +1,25 @@
+{
+  "id": "spin_proj_5a_por_lista",
+  "periodo": "2026-08-03/2026-08-20",
+  "dias_uteis": 14,
+  "mailing": "1 telefone por CCB. Lista 21/08 Early: 18235 CCB, 18235 Concat, 0 contrato com dois numeros.",
+  "definicao": "A 5a tentativa e o 5o spin daquele CCB. Spin hoje = discagem / CCB tocado no dia (1 tel = 1 CCB). Spin ate o 5o = preencher cada CCB ja discado ate 5 toques.",
+  "early": {
+    "ccb_tocados_dia": 27379,
+    "toques_hoje": 3.38,
+    "pct_ja_5o": 26.9,
+    "spin_ate_5o": 5.12
+  },
+  "listas": [
+    {"lista": "Fresh 1-N", "grupo": "Early", "ccb_tocados_dia": 1001, "spin_hoje": 5.26, "pct_ja_5o": 89.9, "spin_ate_5o": 5.50, "meta_lista": 5.0},
+    {"lista": "1 a 30", "grupo": "Early", "ccb_tocados_dia": 8081, "spin_hoje": 4.22, "pct_ja_5o": 47.7, "spin_ate_5o": 5.20, "meta_lista": 5.0},
+    {"lista": "Farfield", "grupo": "Early", "ccb_tocados_dia": 8208, "spin_hoje": 2.34, "pct_ja_5o": 1.4, "spin_ate_5o": 5.00, "meta_lista": 5.0},
+    {"lista": "31 a 60", "grupo": "Early", "ccb_tocados_dia": 6052, "spin_hoje": 3.22, "pct_ja_5o": 16.4, "spin_ate_5o": 5.09, "meta_lista": 5.0},
+    {"lista": "61 a 90", "grupo": "Early", "ccb_tocados_dia": 4037, "spin_hoje": 3.56, "pct_ja_5o": 37.3, "spin_ate_5o": 5.18, "meta_lista": 5.0},
+    {"lista": "91 a 120", "grupo": "Over", "ccb_tocados_dia": 5047, "spin_hoje": 1.29, "pct_ja_5o": 0.3, "spin_ate_5o": 5.00, "meta_lista": 2.0},
+    {"lista": "121 a 180", "grupo": "Over", "ccb_tocados_dia": 5779, "spin_hoje": 1.03, "pct_ja_5o": 0.0, "spin_ate_5o": 5.00, "meta_lista": 2.0},
+    {"lista": "> 180", "grupo": "Over", "ccb_tocados_dia": 2494, "spin_hoje": 1.05, "pct_ja_5o": 0.0, "spin_ate_5o": 5.00, "meta_lista": 2.0},
+    {"lista": "STARS", "grupo": "Over", "ccb_tocados_dia": 1370, "spin_hoje": 4.26, "pct_ja_5o": 50.7, "spin_ate_5o": 5.22, "meta_lista": 2.0}
+  ],
+  "leitura": "1 tel = 1 CCB, logo 5a = 5o spin. Early 3,4x -> 5,1x nos tocados. Farfield 2,3x / 1,4% no 5o: falta reciclar o mesmo numero. Fresh ja em 5,3x. O 11x era erro (mistura de base + hipotese de 2 telefones)."
+}

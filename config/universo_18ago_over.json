@@ -1,0 +1,82 @@
+{
+  "id": "universo_18ago_over",
+  "arquivo_final": true,
+  "referencia": "2026-08-18",
+  "canvas": "canvases/universo-18ago-over.canvas.tsx",
+  "nota": "Mesmo raciocinio do Early, universo SEM corte IA. 1 tel = 1 CCB. Tentativa = spin. Teto util Over NAO e a 5a.",
+  "frase": "Over: 2 no fone. 2 -> 3 = +9 acordos/dia (pessoa extra, media agosto 18,7/2 = 9,3, voz+WPP). Preditivo nas listas mix x1,5: spin 0,49x -> 0,74x, +4 so de lista. Nao somar +9 com +4.",
+  "mailing": "1 telefone por CCB. Over 18/08: 33910 CCB.",
+  "ccb": {
+    "91 a 120": 4967,
+    "121 a 180": 13158,
+    "> 180": 13818,
+    "STARS": 1967,
+    "total": 33910
+  },
+  "disc_por_pessoa": 8341,
+  "hoje_fone": 2,
+  "pesos_3c": {
+    "91 a 120": 25,
+    "121 a 180": 25,
+    "> 180": 11,
+    "STARS": 40,
+    "total": 101
+  },
+  "taxas_14du_ac_sobre_disc_pct": {
+    "nota": "So campanha Over, tentativa ordenada por horario. Nao usar taxa Early 0,21%.",
+    "91 a 120": {"1": 0.077, "2": 0.070, "3": 0.0, "4": 0.0, "5": 0.0},
+    "121 a 180": {"1": 0.069, "2": 0.037, "3": 0.0, "4": 0.0, "5": 0.0},
+    "> 180": {"1": 0.049, "2": 0.058, "3": 0.0, "4": 0.0, "5": 0.0},
+    "STARS": {"1": 0.057, "2": 0.011, "3": 0.048, "4": 0.038, "5": 0.031},
+    "over_blend": {"1": 0.067, "2": 0.040, "3": 0.042, "4": 0.036, "5": 0.030}
+  },
+  "tipico_14_17_18_19": {
+    "disc": 16682,
+    "acordos_lista": 10.8,
+    "spin_mailing": 0.49,
+    "pessoas": 2.0,
+    "listas": [
+      {"lista": "91 a 120", "ccb": 4967, "disc": 3790, "spin": 0.76, "mix_pct": 22.7},
+      {"lista": "121 a 180", "ccb": 13158, "disc": 4636, "spin": 0.35, "mix_pct": 27.8},
+      {"lista": "> 180", "ccb": 13818, "disc": 1942, "spin": 0.14, "mix_pct": 11.6},
+      {"lista": "STARS", "ccb": 1967, "disc": 6315, "spin": 3.21, "mix_pct": 37.9}
+    ]
+  },
+  "incremento_2_para_3": {
+    "pessoas": 1,
+    "cenario": "Discagem escala 1,5x em todas as listas (mix/pesos atuais). Nao apontar extra so em 121-180.",
+    "disc_hoje": 16682,
+    "disc_com_3": 25023,
+    "spin_hoje": 0.49,
+    "spin_com_3": 0.74,
+    "hang_gap_pct": 0.71,
+    "hang_gap_hoje": 148,
+    "hang_gap_com_3": 222,
+    "acordos_extra_pessoa_dia": 9.3,
+    "acordos_fase_agosto_dia": 18.7,
+    "acordos_extra_listas_dia": 4.1,
+    "acordos_lista_hoje": 10.8,
+    "acordos_lista_com_3": 14.9,
+    "listas": [
+      {"lista": "91 a 120", "disc": 5685, "spin": 1.14, "delta_disc": 1895, "delta_ac": 1.4, "nota": "1as que faltam (~1177) + 2as (~718)"},
+      {"lista": "121 a 180", "disc": 6954, "spin": 0.53, "delta_disc": 2318, "delta_ac": 1.6, "nota": "ainda 1a"},
+      {"lista": "> 180", "disc": 2913, "spin": 0.21, "delta_disc": 971, "delta_ac": 0.5, "nota": "ainda 1a"},
+      {"lista": "STARS", "disc": 9473, "spin": 4.82, "delta_disc": 3158, "delta_ac": 0.6, "nota": "50,7% ja na 5a; extra em parte 6a=0"}
+    ],
+    "validacao_91_120": "14-19/08: 91-120 anda com o total (mix 21-24%, peso 25). 17/08 2146 vs 19/08 6950."
+  },
+  "incremento_2_para_4": {
+    "pessoas": 2,
+    "alvo": "2x em 91-120 e 1x completo em 121-180",
+    "disc_extra": 14666,
+    "acordos_duas_listas_dia": 10.3,
+    "acordos_91_120": 4.4,
+    "acordos_121_180": 5.9,
+    "com_2_nao_cabe": true,
+    "com_3_tirar_stars": {"fone": 3, "acordos_liquido_dia": 8},
+    "com_4_resto_igual": {"fone": 4, "acordos_dia": 10.3},
+    "nao_somar_com_mais_9": true,
+    "onde": "2x 91-120 e 1x 121-180. 2 nao cabe (23 mil vs 17 mil). 3 so se tirar STARS (~+8). 4 se o resto ficar (+10)."
+  },
+  "nao_e": "Nao copiar o 15 Early. 5a Over nao e 5x na lista. Nao contratar para >180 nem para 5o spin. 91-120 em 2x nao vem so de +1 pessoa com os pesos de hoje."
+}

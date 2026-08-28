@@ -1,0 +1,64 @@
+{
+  "id": "universo_18ago_5spin",
+  "arquivo_final": true,
+  "referencia": "2026-08-18",
+  "canvas": "canvases/universo-18ago-5spin.canvas.tsx",
+  "nota": "Universo SEM o corte da Contact Pro. Mailing 18/08, 1 telefone = 1 CCB, 5a tentativa = 5o spin. Nao usar 21/08 (lista cortada) para gente.",
+  "frase": "Na lista 18/08, 10 Early no fone fazem 3,2x. Os +5 (10 -> 15) compram o 5o spin e ~+102 acordos/dia, se a discagem extra for aditiva em Farfield / 31-60 / 61-90.",
+  "early": {
+    "ccb": 27695,
+    "listas": {
+      "Fresh 1-N": 1710,
+      "1 a 30": 8073,
+      "Farfield": 6841,
+      "31 a 60": 6254,
+      "61 a 90": 4817
+    },
+    "discagem_5x": 138475,
+    "pessoas_5x": 15.4,
+    "disc_por_pessoa": 9000
+  },
+  "over": {
+    "ccb": 33910,
+    "listas": {
+      "91 a 120": 4967,
+      "121 a 180": 13158,
+      "> 180": 13818,
+      "STARS": 1967
+    }
+  },
+  "quadro_listas": [
+    {"lista": "Fresh 1-N", "ccb": 1710, "disc_tipica": 8196, "spin": 4.79, "disc_5o": 8550, "gap": 354},
+    {"lista": "1 a 30", "ccb": 8073, "disc_tipica": 25244, "spin": 3.13, "disc_5o": 40365, "gap": 15121},
+    {"lista": "Farfield", "ccb": 6841, "disc_tipica": 10930, "spin": 1.60, "disc_5o": 34205, "gap": 23275},
+    {"lista": "31 a 60", "ccb": 6254, "disc_tipica": 16066, "spin": 2.57, "disc_5o": 31270, "gap": 15204},
+    {"lista": "61 a 90", "ccb": 4817, "disc_tipica": 11858, "spin": 2.46, "disc_5o": 24085, "gap": 12227}
+  ],
+  "dia_18": {
+    "disc_early": 64810,
+    "spin": 2.34,
+    "cob_early_pct": 100.0,
+    "extra_ate_5o": 73621,
+    "acordos_early_obs": 129,
+    "acordos_extra_proj": 158.6,
+    "nota": "18/08 foi dia fraco de discagem (loja 135 no discador vs 232 tipico). Nao usar como esforco de referencia."
+  },
+  "tipico_14_17_18_19": {
+    "disc_early": 72295,
+    "spin": 2.61,
+    "pessoas": 8.0,
+    "gap_ate_5x": 66180
+  },
+  "degraus": [
+    {"fone": 8, "disc": 72000, "spin": 2.6, "leitura": "Hoje, lista 18/08. Nao e o 5o."},
+    {"fone": 10, "disc": 90000, "spin": 3.2, "leitura": "Pega hang gap. Ainda 3,2x — falta o 5o."},
+    {"fone": 15, "disc": 135000, "spin": 4.9, "leitura": "5o spin na lista sem corte. 10->15 = +45-48 mil discagens ~+102 acordos."}
+  ],
+  "incremento_10_para_15": {
+    "pessoas": 5,
+    "extra_discagens": 48475,
+    "acordos_dia": 102,
+    "condicao": "Discagem aditiva em Farfield / 31-60 / 61-90. Nao roubar a 1a do 1-30."
+  },
+  "nao_e": "A 16a pessoa e 6a/7a (+19/dia, 8,3% dos 232). O 21/08 (18 mil CCB) cabe em 10 — nao usar para esta conta."
+}

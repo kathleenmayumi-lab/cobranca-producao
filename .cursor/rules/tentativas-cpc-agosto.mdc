@@ -1,0 +1,53 @@
+---
+description: Quadro canônico CPC/acordo/reversão por tentativa (ago/2026) — usar no arquivo final
+alwaysApply: true
+---
+
+# Tentativas 1–7 (agosto) — canônico
+
+Não recalcular. Fonte: `calls_slim` 03–20/08 (14 DU). Tentativa = mesmo telefone, mesmo dia, **ordenado por horário**. Reversão = acordo discador ÷ CPC negociável (painel). Base de produção: **232 acordos/dia** no discador.
+
+Arquivo: `config/tentativas_agosto_14du.json`
+Canvas: `canvases/cpc-acordo-reversao-tentativa-agosto.canvas.tsx`
+
+| k | Acordos/dia | % de 232 | CPC/dia | Reversão | Status |
+|---|---:|---:|---:|---:|---|
+| 1ª | 85,1 | **36,6%** | 161 | 76,7% | observado |
+| 2ª | 56,9 | 24,5% | 106 | 80,4% | observado |
+| 3ª | 40,1 | 17,3% | 71 | 82,4% | observado |
+| 4ª | 28,5 | 12,3% | 51 | 79,6% | observado |
+| 5ª | 17,2 | 7,4% | 30 | 82,3% | observado (teto hoje) |
+| 6ª | 11,6 | 5,0% | 20 | 83,7% | projetado (×0,67) |
+| 7ª | 7,7 | 3,3% | 13 | 85,2% | projetado (×0,67) |
+
+6ª+7ª = +19,3/dia = **8,3%** dos 232. 1ª–5ª somam 98,1%. CPC/discagem ~0,37% em todas. 36,6% na 1ª é o número que a operação considerou excelente.
+
+# Tentativas Over 1–5 (agosto) — canônico
+
+Não recalcular. Mesmo método da Early (`calls_slim` 03–20/08, horário). Só Over. Base Over discador **13,1 acordos/dia**. 1ª = **10,8 (82%)** · 2ª 1,2 · 3ª 0,6 · 4ª 0,4 · 5ª 0,2. CPC/discagem 0,18% (Early 0,37%). Reversão 1ª **54,7%** (Early 76,7%). 3ª–5ª ≈ só STARS; 91–180 zera na 3ª. 6ª/7ª = 0. Arquivo: `config/tentativas_over_agosto_14du.json`. Canvas: `canvases/cpc-acordo-reversao-tentativa-over.canvas.tsx`.
+
+# 5ª tentativa por lista (teto hoje)
+
+Não recalcular. `% telefones ≥5 toques no dia`. Agosto 14 DU: **19,2%** no total. Fresh 89,9% · STARS 50,7% · 1–30 47,7% · 61–90 37,3% · 31–60 16,4% · Farfield 1,4% · 91–180+ ~0%. Arquivo: `config/quinta_tentativa_por_lista.json`.
+
+# 100% do 1–90 na 5ª — canônico
+
+Não recalcular. Universo = telefones **já discados** no dia (não a carteira bruta). Early hoje 27% na 5ª → 218 acordos. Se 100% tomasse 5 toques: **+102 acordos/dia** (218→320), **+47 mil discagens** (+51%). Quase metade do extra é Farfield (+47). Fresh quase zero (+0,5, já em 90%). Arquivo: `config/proj_100pct_5a_early.json`.
+
+Para chegar nesse número (não é a folha de 16): discagem **aditiva** +47 mil; **+5 Early no fone** (10 → 15); canal sem roubar a 1ª do 1–30; peso em Farfield / 31–60 / 61–90. Subir teto para 7 não destrava. Sem gente o extra vira hang gap (~+230/dia).
+
+# Universo 18/08 (sem corte IA) — canônico para gente
+
+Não misturar com 21/08. Mailing 18/08: **27.695 CCB Early**, 1 tel = 1 CCB, 5× = 138 mil = **15 no fone**. Típico 14–19: 8 pessoas, 72 mil, 2,6×. Dez pessoas = 3,2× (hang gap, ainda não é o 5º). **10 → 15 = +102 acordos/dia** se a discagem extra for aditiva em Farfield / 31–60 / 61–90. 16ª = 6ª/7ª (não entra). Arquivo: `config/universo_18ago_5spin.json`. Canvas: `canvases/universo-18ago-5spin.canvas.tsx`.
+
+# Universo 18/08 Over 90 — canônico para gente
+
+Não copiar o 15 Early. Mesma base 18/08, 1 tel = 1 CCB. Over **não cobre** a lista (121–180 24% no 18/08); quem entra toma **1 toque**. 5º nos tocados = **+5 acordos / +34 mil disc**. Taxa 1ª Over 0,067% (não usar 0,21% Early). Hoje **2** no fone. **3** = uma cadeira a mais na média de agosto (~**+9 acordos/dia**, 18,7 nos 2 ÷ 2, voz+WPP). Preditivo nas listas, mix ×1,5: spin 0,49×→0,74×, 91–120 0,76×→1,14×, **+4** só de lista — não somar com o +9. **4** só se for **2× em 91–120 + 1× em 121–180**: +10 nas duas listas; com 2 não cabe; 3 só se tirar STARS (~+8 líquido). Não somar com o +9. 5+ / 5× mailing / >180 não. STARS já 3,2× — deslocar. Arquivo: `config/universo_18ago_over.json`. Canvas: `canvases/universo-18ago-over.canvas.tsx`.
+
+# Quadro ideal (arquivo único)
+
+Não recalcular. **18 no fone: 15 Early + 3 Over.** Típico hoje: 10 (8+2). Volume de carteira = **global, sem divisão IA / humano**. Early 10→15 = +102 (5º spin, extra em Farfield / 31–60 / 61–90). Over 2→3 = **+9** (pessoa extra, média agosto 9,3/dia). +4 = só preditivo nas listas. 16ª = 6ª/7ª. Arquivo: `docs/QUADRO_IDEAL_OPERACAO.md`. Canvas: `canvases/quadro-ideal-cobranca.canvas.tsx`.
+
+# Spin até o 5º — por lista
+
+Não recalcular. Mailing = **1 telefone por CCB** (21/08: 18.235 Early, zero com dois números). A 5ª tentativa **é** o 5º spin daquele contrato. Early tocado **3,4× → 5,1×**. Farfield **2,3× → 5,0×** (1,4% já no 5º — falta reciclar). 1–30 4,2× → 5,2×. Fresh já 5,3×. Arquivo: `config/spin_proj_5a_por_lista.json`.

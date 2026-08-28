@@ -1,0 +1,66 @@
+{
+  "id": "proj_100pct_5a_early_1a90",
+  "universo": "Telefones ja discados no dia nas listas Early 1-90 (Fresh, 1-30, Farfield, 31-60, 61-90). Nao e a carteira bruta.",
+  "periodo": "2026-08-03/2026-08-20",
+  "dias_uteis": 14,
+  "metodo": "Extra discagem = max(0, 5 - tentativas atuais) por telefone. Acordo extra = volume extra na k-esima tentativa x taxa de acordo da k-esima do quadro tentativas_agosto_14du (~0,21%).",
+  "hoje": {
+    "telefones_dia": 27324,
+    "pct_ja_na_5a": 27.0,
+    "discagens_dia": 92495,
+    "acordos_dia": 217.6,
+    "tentativas_medias": 3.39
+  },
+  "cenario_100pct_na_5a": {
+    "discagens_dia": 140043,
+    "extra_discagens_dia": 47548,
+    "extra_discagens_pct": 51,
+    "acordos_dia": 320.0,
+    "extra_acordos_dia": 102.4,
+    "extra_acordos_pct_early": 47,
+    "extra_sobre_producao_loja_232": 44.1
+  },
+  "racional": {
+    "frase": "Teoricamente +102 acordos/dia (~100) se 100% dos telefones ja discados em 1-90 chegassem na 5a tentativa.",
+    "early_hoje_acordos_dia": 218,
+    "early_proj_acordos_dia": 320,
+    "incremento_acordos_dia": 102,
+    "onde_esta_o_ganho": "Farfield +47 (hoje 1,4% na 5a). 31-60 +24. 1-30 +17 (ja gira). 61-90 +14. Fresh +0,5 (ja 90% no teto).",
+    "condicao": "So se o preditivo colocar os +47 mil toques e houver gente para atender. Sem isso o 100 nao aparece — vira hang gap (~+230 abandonadas/dia a 0,48%).",
+    "universo": "Listas Early: Fresh 1-N (Fairfield curto), 1-30 STARS, Farfield, 31-60, 61-90. Over 91+ fora.",
+    "taxa": "Acordo extra = discagem extra na 2a-5a x taxa de acordo daquela tentativa (~0,21%). Um pouco otimista no Farfield."
+  },
+  "para_chegar": {
+    "nao_e_a_folha_16": "Mailing = 1 telefone por CCB, logo 5a = 5o spin. A folha de 16 (10 Early) mira 5x na base 21/08 (~91 mil). O +102 e o volume de 03-20/08 para levar todo CCB ja tocado ao 5o (~140 mil, Early 3,4x -> 5,1x). Farfield hoje 2,3x / 1,4% no 5o.",
+    "discagem_aditiva": true,
+    "extra_discagens_dia": 47548,
+    "gente": {
+      "disc_por_pessoa_early": 9000,
+      "extra_no_fone": 5,
+      "hoje_recomendado_early_fone": 10,
+      "para_este_numero_early_fone": 15,
+      "hang_gap_extra_dia": 230,
+      "acordos_por_pessoa_extra": 20
+    },
+    "onde_apontar_peso": [
+      {"lista": "Farfield", "peso_hoje": "10 + Fresh 18", "pct_5a": 1.4, "extra_disc": 21630, "extra_ac": 46.5, "acao": "Reciclar o mesmo telefone. Quase metade do +102."},
+      {"lista": "31 a 60", "peso_hoje": 16, "pct_5a": 16.3, "extra_disc": 11232, "extra_ac": 24.2, "acao": "Subir recycle. Segundo maior ganho."},
+      {"lista": "61 a 90", "peso_hoje": 16, "pct_5a": 37.4, "extra_disc": 6544, "extra_ac": 14.1, "acao": "Completar quem ja esta em 3-4 toques."},
+      {"lista": "1 a 30", "peso_hoje": 40, "pct_5a": 47.7, "extra_disc": 7901, "extra_ac": 17.1, "acao": "Ja gira. Nao desviar canal da 1a tentativa."},
+      {"lista": "Fresh 1-N", "peso_hoje": 18, "pct_5a": 89.9, "extra_disc": 241, "extra_ac": 0.5, "acao": "Ja no teto. Tirar peso, nao colocar extra."}
+    ],
+    "nao_ajuda": [
+      "Subir teto 5 para 7 — Farfield nem chegou na 5a.",
+      "Contratar Over — o +102 e so 1-90.",
+      "Redistribuir discagem tirando a 1a do 1-30 (36,6% da producao).",
+      "Colocar a 11a-15a pessoa no 1-30/Fresh — cai produtividade e nao e este cenario."
+    ]
+  },
+  "listas": [
+    {"lista": "Fresh 1-N", "pct_ja_5a": 89.9, "disc_hoje": 5287, "extra_disc": 241, "ac_hoje": 21.9, "ac_extra": 0.5, "ac_proj": 22.4},
+    {"lista": "1-30", "pct_ja_5a": 47.7, "disc_hoje": 34136, "extra_disc": 7901, "ac_hoje": 136.2, "ac_extra": 17.1, "ac_proj": 153.3},
+    {"lista": "Farfield", "pct_ja_5a": 1.4, "disc_hoje": 19132, "extra_disc": 21630, "ac_hoje": 30.7, "ac_extra": 46.5, "ac_proj": 77.2},
+    {"lista": "31-60", "pct_ja_5a": 16.3, "disc_hoje": 19506, "extra_disc": 11232, "ac_hoje": 19.8, "ac_extra": 24.2, "ac_proj": 44.0},
+    {"lista": "61-90", "pct_ja_5a": 37.4, "disc_hoje": 14433, "extra_disc": 6544, "ac_hoje": 9.0, "ac_extra": 14.1, "ac_proj": 23.1}
+  ]
+}

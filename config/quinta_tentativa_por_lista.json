@@ -1,0 +1,40 @@
+{
+  "id": "quinta_tentativa_por_lista",
+  "teto_atual": 5,
+  "metrica": "% telefones com >=5 ligacoes no dia / telefones discados na lista",
+  "agosto_14du": {
+    "periodo": "2026-08-03/2026-08-20",
+    "telefones_dia": 42069,
+    "chegam_5a_dia": 8080,
+    "pct_total": 19.2,
+    "listas": [
+      {"lista": "Fresh 1-N", "telefones_dia": 1001, "na_5a_dia": 900, "pct": 89.9},
+      {"lista": "STARS", "telefones_dia": 1370, "na_5a_dia": 695, "pct": 50.7},
+      {"lista": "1-30", "telefones_dia": 8081, "na_5a_dia": 3852, "pct": 47.7},
+      {"lista": "61-90", "telefones_dia": 4037, "na_5a_dia": 1507, "pct": 37.3},
+      {"lista": "31-60", "telefones_dia": 6052, "na_5a_dia": 994, "pct": 16.4},
+      {"lista": "Farfield", "telefones_dia": 8208, "na_5a_dia": 118, "pct": 1.4},
+      {"lista": "91-120", "telefones_dia": 5047, "na_5a_dia": 15, "pct": 0.3},
+      {"lista": "121-180", "telefones_dia": 5779, "na_5a_dia": 0, "pct": 0.0},
+      {"lista": ">180", "telefones_dia": 2494, "na_5a_dia": 0, "pct": 0.0}
+    ]
+  },
+  "hoje_21_parcial": {
+    "data": "2026-08-21",
+    "nota": "dia em curso",
+    "telefones": 26900,
+    "chegam_5a": 3499,
+    "pct_total": 13.0,
+    "listas": [
+      {"lista": "Fresh 1-N", "pct": 50.3},
+      {"lista": "61-90", "pct": 66.1},
+      {"lista": "STARS", "pct": 64.2},
+      {"lista": "1-30", "pct": 6.6},
+      {"lista": "31-60", "pct": 0.8},
+      {"lista": "Farfield", "pct": 0.0},
+      {"lista": "91-120", "pct": 0.0},
+      {"lista": "121-180", "pct": 0.0},
+      {"lista": ">180", "pct": 0.0}
+    ]
+  }
+}
