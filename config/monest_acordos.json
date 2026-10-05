@@ -1,0 +1,209 @@
+{
+  "id": "monest_acordos",
+  "fonte": "atualizacao manual",
+  "atualizado_em": "2026-10-05",
+  "metodo": "Cada linha da atualização é um acordo. Colunas, nesta ordem: cliente, cpf, data, valor, ccb, status. O 25 no fim da mensagem é a contagem dos acordos, não um CCB. Status entra como veio: Em andamento ou Quebrado. Sem CCB ou sem status o acordo fica incompleto e não é completado.",
+  "acordos": [
+    {
+      "cliente": "Maria Jose farias de Oliveira",
+      "cpf": "081.417.414-03",
+      "data": "2026-10-12",
+      "valor": 152.43,
+      "ccb": "3009211",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Lidiane rocha da silva valentim",
+      "cpf": "015.078.996-37",
+      "data": "2026-10-12",
+      "valor": 243.59,
+      "ccb": "3007955",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Edilson Assis",
+      "cpf": "718.603.559-00",
+      "data": "2026-10-05",
+      "valor": 227.28,
+      "ccb": "3007825",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Maria Jose da Silva",
+      "cpf": "013.845.024-24",
+      "data": "2026-10-12",
+      "valor": 217.08,
+      "ccb": "3006603",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Charles de Oliveira Lima",
+      "cpf": "367.979.838-51",
+      "data": "2026-10-12",
+      "valor": 162.42,
+      "ccb": "3006450",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Andresa Barossi",
+      "cpf": "973.160.160-00",
+      "data": "2026-10-12",
+      "valor": 195.25,
+      "ccb": "3003422",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Francisco Francileudo dos Santos",
+      "cpf": "285.321.678-02",
+      "data": "2026-10-05",
+      "valor": 180.42,
+      "ccb": "3003362",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Roberta Chiarello",
+      "cpf": "059.900.679-09",
+      "data": "2026-10-05",
+      "valor": 252.02,
+      "ccb": "3003280",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Guilherme Todelis Del passo",
+      "cpf": "264.287.568-70",
+      "data": "2026-10-05",
+      "valor": 233.71,
+      "ccb": "2996953",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Thamer Luiz cunha gregorio",
+      "cpf": "020.687.936-95",
+      "data": "2026-10-07",
+      "valor": 192.32,
+      "ccb": "2993618",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Joao Marcos Martins",
+      "cpf": "143.537.171-20",
+      "data": "2026-10-07",
+      "valor": 248.20,
+      "ccb": "2993610",
+      "status": "Quebrado"
+    },
+    {
+      "cliente": "Cecilia Dos Santos Costa",
+      "cpf": "602.987.793-31",
+      "data": "2026-10-02",
+      "valor": 154.77,
+      "ccb": "2993558",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Maria dos Humildes de Oliveira Santos",
+      "cpf": "305.457.653-15",
+      "data": "2026-10-07",
+      "valor": 244.35,
+      "ccb": "2992480",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Jose Fernando Campos pereira",
+      "cpf": "363.639.268-90",
+      "data": "2026-10-07",
+      "valor": 189.34,
+      "ccb": "2991454",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Elaine Cabral lima",
+      "cpf": "915.243.695-00",
+      "data": "2026-10-07",
+      "valor": 195.10,
+      "ccb": "2991442",
+      "status": "Quebrado"
+    },
+    {
+      "cliente": "Epaminondas Bruno Gomes do Sacramento",
+      "cpf": "062.074.069-82",
+      "data": "2026-10-02",
+      "valor": 228.50,
+      "ccb": "2990199",
+      "status": "Quebrado"
+    },
+    {
+      "cliente": "Lucas Rodrigues Gonçalves",
+      "cpf": "114.996.436-75",
+      "data": "2026-10-02",
+      "valor": 126.30,
+      "ccb": "2989174",
+      "status": "Quebrado"
+    },
+    {
+      "cliente": "Margaret dos Santos",
+      "cpf": "678.753.606-25",
+      "data": "2026-10-02",
+      "valor": 243.12,
+      "ccb": "2986088",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Carlos Ribeiro dos Santos",
+      "cpf": "958.312.665-91",
+      "data": "2026-10-06",
+      "valor": 246.04,
+      "ccb": "2986080",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Richardes Mateus Nascimento",
+      "cpf": "931.716.681-49",
+      "data": "2026-10-06",
+      "valor": 248.20,
+      "ccb": "2985514",
+      "status": "Em andamento"
+    },
+    {
+      "cliente": "Edjaldo Silva Mendes",
+      "cpf": "105.372.154-41",
+      "data": "2026-10-06",
+      "valor": 217.75,
+      "ccb": "2985070",
+      "status": "Quebrado"
+    },
+    {
+      "cliente": "Mauro Muniz Piersanti",
+      "cpf": "784.330.297-20",
+      "data": "2026-10-01",
+      "valor": 228.50,
+      "ccb": "2985068",
+      "status": "Quebrado"
+    },
+    {
+      "cliente": "Guilherme Todelis Del passo",
+      "cpf": "264.287.568-70",
+      "data": "2026-10-01",
+      "valor": 233.71,
+      "ccb": "2984594",
+      "status": "Quebrado"
+    },
+    {
+      "cliente": "Robson Alves da Silva",
+      "cpf": "063.347.316-29",
+      "data": "2026-10-01",
+      "valor": 164.11,
+      "ccb": "2984585",
+      "status": "Quebrado"
+    },
+    {
+      "cliente": "Deivit Eduardo Carvalho Oliveira",
+      "cpf": "034.061.391-24",
+      "data": "2026-10-01",
+      "valor": 211.79,
+      "ccb": null,
+      "status": null,
+      "observacao": "CCB e status não vieram nesta atualização."
+    }
+  ]
+}
