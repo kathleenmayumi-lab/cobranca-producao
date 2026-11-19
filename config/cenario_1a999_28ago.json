@@ -1,0 +1,73 @@
+{
+  "id": "cenario_1a999_28ago",
+  "arquivo_final": true,
+  "referencia": "2026-08-28",
+  "nota": "Arthur desligado. Celula Over extinta. Time unico cobra 1-999. Nao recalcular tentativas: aplica o canonico 03-20/08 e o universo 18/08. Nao e 5x em 61605 CCB.",
+  "frase": "18 no telefone cobrando 1 a 999. Quem trabalha esta no fone: 12 antes, 11 agora (Arthur fora), 18 o alvo. Contratar +7.",
+  "spin_early": {
+    "errado_2_6": "discagem / CCB do mailing inteiro, inclui quem nao foi ligado. Nao e o que a operacao da.",
+    "quem_a_gente_liga": 3.38,
+    "ate_o_5o_nos_ligados": 5.12,
+    "fresh": 5.26,
+    "farfield": 2.34
+  },
+  "premissas": {
+    "carteira": "global, sem split IA/humano",
+    "tentativa": "1 telefone = 1 CCB",
+    "nao_misturar_taxa": "Early ~0,21% vs Over 1a 0,067%",
+    "arthur": "saiu da Early em 28/08",
+    "over_celula": "extinta; early_absorbs_over_from 26/08"
+  },
+  "folha": {
+    "quem_trabalha_esta_no_fone": true,
+    "antes": 12,
+    "hoje": 11,
+    "ideal": 18,
+    "contratar": 7,
+    "antes_split": "10 Early + 2 Over"
+  },
+  "mailing_18ago": {
+    "early_ccb": 27695,
+    "over_ccb": 33910,
+    "total_ccb": 61605
+  },
+  "alocacao_18": {
+    "eq_early_1a90": 15,
+    "eq_over_1a": 3,
+    "disc_early": 135000,
+    "disc_over": 25000,
+    "mix_pct": [84, 16]
+  },
+  "rejeitado": {
+    "cinco_x_1a999": {
+      "pessoas": 34,
+      "conta": "61605 x 5 / 8900",
+      "motivo": "copia o 15 Early no Over. Over 5a = R$ 154. 82% ja sai na 1a."
+    },
+    "pessoa_16": "6a/7a, +19/dia, nao cobre lista"
+  },
+  "peso_hoje_campanha_unica": {
+    "1 a 30": 40,
+    "31 a 60": 20,
+    "61 a 90": 20,
+    "Farfield": 10,
+    "91 a 120": 5,
+    "121 a 180": 3,
+    "> 180": 2,
+    "total": 100,
+    "risco": "90/10 vs 84/16. Over 1a cai de 2 cadeiras para ~1. 1-30 come o extra."
+  },
+  "custo": {
+    "salario": 8000,
+    "licenca": 319.9,
+    "folha_hoje": 11,
+    "fone_hoje": 9,
+    "licencas_hoje": 11,
+    "hoje_r_mes": 91519,
+    "ideal_r_mes": 149758,
+    "delta_r_mes": 58239,
+    "nota": "Delta e 11→18 empregados. 18 discando com falta de agosto pede folha >18."
+  },
+  "canvas": "canvases/quadro-ideal-1a999.canvas.tsx",
+  "html": "docs/QUADRO_IDEAL_1A999.html"
+}

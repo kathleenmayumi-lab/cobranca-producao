@@ -1,0 +1,185 @@
+COBRANÇA VELOTAX
+Dois textos para encaminhar no WhatsApp.
+1) Férias de fim de ano — grupo do time
+2) Quadro 11 → 18 — diretoria
+
+
+════════════════════════════════
+1. FÉRIAS DE FIM DE ANO
+Comunicado interno · 13/10/2026
+════════════════════════════════
+
+Quem tem férias a marcar coloca 10 ou 15 dias entre 21/12/2026 e 04/01/2027.
+
+Havendo período aquisitivo, a saída preferencial é essa janela.
+São 15 dias corridos: segunda 21/12/2026 a segunda 04/01/2027.
+A volta de todo mundo é na terça 05/01/2027.
+
+ESCOLHA UMA DAS DUAS
+
+15 dias
+• Último dia no fone: sexta 18/12
+• Férias: 21/12/2026 a 04/01/2027
+• Volta: terça 05/01/2027
+• Cobre a janela inteira, da véspera do Natal até depois do Ano-Novo.
+
+10 dias
+• Último dia no fone: quinta 24/12
+• Férias: 26/12/2026 a 04/01/2027
+• Volta: terça 05/01/2027
+• Cobre Natal, Réveillon e a primeira segunda de janeiro. Segue no fone em 21, 22, 23 e 24/12.
+
+PARA QUEM VALE
+
+Para quem já completou 12 meses e tem férias a conceder. Quem ainda está no primeiro período aquisitivo segue na operação e não marca férias por este comunicado.
+
+Os 15 dias já formam o bloco longo das férias. Quem escolher 10 dias marca, no restante, um bloco de pelo menos 14 dias corridos em outra data.
+
+RESPOSTA ATÉ SEXTA 31/10
+No grupo ou para a supervisão, nesta forma:
+
+Nome · 15 dias
+ou
+Nome · 10 dias
+
+As datas deste fim de ano são estas duas. Outro período do saldo de férias fica para combinar com a supervisão, fora desta janela.
+
+
+════════════════════════════════
+2. QUADRO DE PESSOAL
+Uso interno · Diretoria · 28/08/2026
+Cobrança de empréstimo pessoal · carteira 1 a 999
+════════════════════════════════
+
+RECOMENDAÇÃO
+
+Autorizar ampliar o quadro de 11 para 18 analistas no discador (+7 contratações).
+Custo incremental: R$ 58 mil/mês.
+O time passa a atuar em campanha única, cobrindo toda a carteira (1 a 999).
+A célula Over 90 foi desfeita e um analista saiu da operação em 28/08.
+
+Sem essa capacidade, a operação não completa o 5º toque no atraso 1 a 90 — de onde viriam cerca de 102 acordos/dia — e reduz o primeiro toque acima de 90 dias.
+
+Corte: 5º toque no 1 a 90 e 1ª ligação acima de 90.
+7º e 8º toque ainda fecham acordo (~R$ 19 cada), mas não abrem vaga.
+Acima de 90 o acordo zera na 6ª (e na 3ª em 91–180).
+
+Quadro proposto: 18
+Quadro atual: 11
+Vagas a autorizar: +7
+
+DECISÃO SOLICITADA
+
+1. Aprovar 7 vagas, elevando o quadro a 18 posições no discador.
+2. Manter campanha única (1 a 999), sem reabrir célula Over.
+3. Condicionar o ganho ao ajuste de prioridade das listas (seção peso).
+4. Não autorizar vaga para 6º toque em diante no 1 a 90, nem recycle acima de 90.
+
+CONTEXTO
+
+Até 25/08: duas células, Early (1 a 90) e Over (acima de 90), 12 analistas.
+26/08: célula Over absorvida. Todo o time cobra 1 a 999 no mesmo discador.
+28/08: saiu um analista. Quadro vigente: 11 pessoas, todas no telefone.
+
+Carteira (mailing 18/08, sem corte de IA, 1 telefone por contrato):
+• 1 a 90: 27.695 contratos
+• acima de 90: 33.910 contratos
+• total: 61.605 CCBs
+
+Produção observada no discador: 232 acordos/dia (3 a 20/08, 14 dias úteis).
+
+Analistas no discador
+• Até 25/08: 12 — duas células (Early + Over)
+• 28/08, atual: 11 — campanha única 1 a 999
+• Proposta: 18 — campanha única 1 a 999
+Total: 18 no telefone. Quem está na folha está no fone.
+
+POR QUE 18 — E NÃO 11, 15 OU 34
+
+A conta é gente para o toque que ainda fecha acordo em cada faixa.
+
+1 a 90. Nos contratos já discados no dia, a média é 3,4 toques. Fresh já recebe 5. Farfield recebe 2,3 e só 1,4% chega ao 5º. Completar o 5º eleva a Early de 218 para 320 acordos/dia (+102). Quase metade do extra está no Farfield. Isso pede 15 analistas (27.695 × 5 toques ÷ 9 mil discagens por pessoa).
+
+Acima de 90. 82% dos acordos saem na primeira ligação. Reciclar até o 5º quase não gera acordo. O teto útil é o primeiro toque: 3 analistas (+9 acordos/dia no ritmo de agosto, voz e WhatsApp). Cinco toques em toda a carteira Over pediriam cerca de 20 pessoas para um ganho irrelevante.
+
+Faixa | Papel | Analistas | Efeito
+1 a 90 | Completar o 5º toque (Farfield, 31–60, 61–90) | 15 | +102 acordos/dia
+91 a 999 | Assegurar o 1º toque; não reciclar fundo de fila | 3 | +9 acordos/dia
+Total | Um time, uma campanha | 18 | +111 acordos/dia
+
+O que não se pede: 34 pessoas para cinco toques nos 61.605 contratos. Nem vaga para 6º, 7º ou 8º toque.
+
+ATÉ ONDE VALE DISCAR
+
+Cadeira: R$ 8.320/mês (R$ 378/dia, 22 dias úteis).
+R$ 8.000 de salário (96%) e R$ 319,90 de ramal 3C (4%), licença ilimitada, sem tarifa por minuto.
+Custo por acordo = (fração da cadeira naquele toque × R$ 378) ÷ acordos daquele toque.
+
+ATRASO 1 A 90
+1ª a 5ª observadas. 6ª a 12ª projetadas (×0,67). A conversão não cai: cada acordo pede ~470 discagens em qualquer toque. Custo por acordo fica ~R$ 19–22. O que some é o volume.
+
+Toque | Acordos/dia | % da loja | Cadeira | Custo/dia | Custo/acordo
+1ª | 85,1 | 36,6% | 4,86 | R$ 1.837 | R$ 22
+2ª | 56,9 | 24,5% | 3,05 | R$ 1.152 | R$ 20
+3ª | 40,1 | 17,3% | 2,20 | R$ 832 | R$ 21
+4ª | 28,5 | 12,3% | 1,39 | R$ 527 | R$ 18
+5ª (teto do quadro) | 17,2 | 7,4% | 0,90 | R$ 340 | R$ 20
+6ª | 11,6 | 5,0% | 0,59 | R$ 223 | R$ 19
+7ª | 7,7 | 3,3% | 0,39 | R$ 146 | R$ 19
+8ª | 5,2 | 2,2% | 0,26 | R$ 98 | R$ 19
+9ª | 3,5 | 1,5% | 0,17 | R$ 66 | R$ 19
+10ª | 2,3 | 1,0% | 0,12 | R$ 44 | R$ 19
+11ª | 1,6 | 0,7% | 0,08 | R$ 30 | R$ 19
+12ª | 1,1 | 0,5% | 0,05 | R$ 20 | R$ 19
+Total 1ª–5ª (observado) | 228 | 98,1% | 12,4 | R$ 4.688 | R$ 21
+
+No 1 a 90 não chega a zero. A 12ª ainda fecha 1,1 acordo/dia (0,5% da loja).
+
+A 7ª não abre vaga: R$ 146/dia (0,39 cadeira), R$ 19 por acordo — o mesmo da 1ª. Não é uma pessoa, e recicla quem já tomou 5 toques.
+A 8ª: R$ 98/dia (0,26 cadeira), também R$ 19 por acordo.
+A 16ª posição (6ª+7ª juntas) custaria R$ 8.320/mês para +19 acordos/dia em lista que já girou, enquanto o Farfield está em 1,4% no 5º.
+
+ACIMA DE 90
+Aqui o custo por acordo sobe, porque a conversão cai depois da 1ª. Da 6ª em diante o discador não produz acordo.
+
+Toque | Acordos/dia | % do Over | Cadeira | Custo/dia | Custo/acordo
+1ª | 10,8 | 82% | 1,98 | R$ 748 | R$ 69
+2ª | 1,2 | 9% | 0,35 | R$ 131 | R$ 108
+3ª | 0,6 | 4% | 0,16 | R$ 62 | R$ 109
+4ª | 0,4 | 3% | 0,12 | R$ 45 | R$ 126
+5ª | 0,2 | 2% | 0,09 | R$ 32 | R$ 154
+6ª a 12ª | 0 | 0% | 0 | R$ 0 | —
+Total | 13,1 | 100% | 2,70 | R$ 1.019 | R$ 78
+
+Zera na 6ª. Em 91 a 180, zera na 3ª.
+A 2ª já custa R$ 108 por acordo contra R$ 69 na 1ª. Por isso o quadro reserva 3 analistas para o primeiro toque.
+
+INVESTIMENTO
+
+Analista a R$ 8.000/mês. Licença 3C a R$ 319,90/mês, ilimitada.
+
+ | Analistas | Gente | Licença 3C | Total/mês
+Quadro atual | 11 | R$ 88.000 | R$ 3.519 | R$ 91.519
+Quadro proposto | 18 | R$ 144.000 | R$ 5.758 | R$ 149.758
+Total (incremento) | +7 | R$ 56.000 | R$ 2.239 | R$ 58.239
+
+O incremento equivale a cerca de R$ 24 por acordo extra (111 acordos/dia × 22 dias úteis).
+
+PESO DAS LISTAS — CONDIÇÃO PARA O GANHO APARECER
+
+As 7 vagas só compram os +111 acordos/dia se o volume extra for para as listas certas.
+Hoje o 1 a 30 concentra peso 40; Farfield está em 10; 91 a 180 somam 8.
+Sem ajuste, a capacidade nova recicla o 1 a 30 e o Farfield permanece em 1,4% no 5º toque.
+
+Lista | Orientação
+Farfield, 31 a 60, 61 a 90 | Reciclar. Concentram quase todo o +102 do Early.
+1 a 30 | Não retirar canal. A 1ª tentativa dessa lista é 36,6% da produção do discador.
+91 a 180 | Garantir o primeiro toque. Não reciclar até o 5º.
+Fresh, STARS Over, atraso acima de 180 | Não aumentar peso. Já saturam ou não convertem.
+Total | Contratar sem reordenar o discador não entrega o ganho.
+
+PRÓXIMO PASSO
+
+Com a aprovação, abrir as 7 vagas e ajustar os pesos da campanha 1 a 999 na mesma semana da entrada das primeiras posições: Farfield / 31–60 / 61–90 no recycle; 91–180 no primeiro toque; 1 a 30 preservado.
+
+Base: discador 03–20/08 (14 dias úteis). Carteira: mailing 18/08, um telefone por CCB. Loja observada: 232 acordos/dia no discador.
