@@ -1,0 +1,4 @@
+saida/
+*.pyc
+__pycache__/
+assets/referencia.jpg
