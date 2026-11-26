@@ -26,4 +26,8 @@ python3 gerar.py ana.jpg --nome Ana -o saida/
 | `assets/gloss_overlay.png` | Brilho da bola por cima da foto |
 | `assets/meta.json` | Centro e raio do círculo |
 
+## Artes geradas
+
+As PNGs do time ficam em `grinch-time/artes/` (também tem o ZIP `grinch-time.zip` nessa pasta).
+
 Uso interno do time, a partir da arte de referência fornecida.
