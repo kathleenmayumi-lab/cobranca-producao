@@ -28,6 +28,9 @@ python3 gerar.py ana.jpg --nome Ana -o saida/
 
 ## Artes geradas
 
-As PNGs do time ficam em `grinch-time/artes/` (também tem o ZIP `grinch-time.zip` nessa pasta).
+As PNGs do time ficam em `grinch-time/artes/`.
+
+- `grinch-impressao-2porfolha.pdf` — A4, **2 artes por folha**, pronto pra imprimir
+- `grinch-time.zip` — PNGs + PDF
 
 Uso interno do time, a partir da arte de referência fornecida.
